@@ -25,6 +25,10 @@ if [[ ! -z $1 ]];then
 	dir=$1
 fi
 
+[[ -d ${dir}/pxeserver ]] && rm -R ${dir}/pxeserver
+mkdir -p ${dir}/pxeserver
+
+
 [[ -d /tmp/pxe-server ]] && rm -R /tmp/pxe-server
 mkdir -p /tmp/pxe-server > /dev/null 2>&1
 cd /tmp/pxe-server
@@ -42,8 +46,7 @@ fi
 
 cat /tmp/pxe-server/hiveos-pxe-diskless-master/pxeserver/hiveramfs/x* > /tmp/pxe-server/hiveos-pxe-diskless-master/pxeserver/hiveramfs/hiveramfs.tar.xz
 rm /tmp/pxe-server/hiveos-pxe-diskless-master/pxeserver/hiveramfs/x*
-[[ -d ${dir}/pxeserver ]] && rm -R ${dir}/pxeserver
-mkdir -p ${dir}/pxeserver
+
 echo
 echo -e "${GREEN}> Copy PXE-server package to destination directory.${NOCOLOR}"
 cp -R /tmp/pxe-server/hiveos-pxe-diskless-master/pxeserver/* ${dir}/pxeserver/
@@ -51,4 +54,4 @@ cp -R /tmp/pxe-server/hiveos-pxe-diskless-master/pxeserver/* ${dir}/pxeserver/
 rm -R /tmp/pxe-server > /dev/null 2>&1
 
 cd ${dir}/pxeserver
-exec ./pxe-config.sh
+exec sudo ./pxe-config.sh
