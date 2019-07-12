@@ -35,13 +35,6 @@ while true; do
 		echo -e "${RED}> Please specify FULL PATH to destination dir${NOCOLOR}"
 done
 
-echo ${dir}/pxeserver
-exit
-
-if [[ ! -z $1 ]];then
-	[[ $(echo $1 | head -c 1) != "/" ]] && echo -e "${RED}> Please specify FULL PATH to destination dir. Exit${NOCOLOR}" && exit
-	dir=$1
-fi
 
 [[ -d ${dir}/pxeserver ]] && rm -R ${dir}/pxeserver
 mkdir -p ${dir}/pxeserver
