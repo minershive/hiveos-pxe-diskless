@@ -19,7 +19,25 @@ WHITE='\033[1;37m'
 NOCOLOR='\033[0m'
 
 
-dir="/"
+dir=""
+echo
+echo -e "Destination directory: ${YELLOW}${dir}/pxeserver${NOCOLOR}"
+echo "Press ENTER to continue with this URL or type a new one"
+while true; do
+		read dest
+		[[ -z $dest ]] && break
+		if [[ $(echo $dest | head -c 1) == "/" ]]; then
+			dir=$dest
+			[[ $dir == "/" ]] && dir=""
+			echo -e "New destination directory: ${YELLOW}${dir}/pxeserver${NOCOLOR}"
+			break
+		fi
+		echo -e "${RED}> Please specify FULL PATH to destination dir${NOCOLOR}"
+done
+
+echo ${dir}/pxeserver
+exit
+
 if [[ ! -z $1 ]];then
 	[[ $(echo $1 | head -c 1) != "/" ]] && echo -e "${RED}> Please specify FULL PATH to destination dir. Exit${NOCOLOR}" && exit
 	dir=$1
