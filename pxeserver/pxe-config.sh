@@ -27,18 +27,20 @@ HIVE_CONF=$mydir"/hive-config/rig.conf"
 
 TFTP_ROOT=$mydir"/tftp"
 BOOT_CONF=$TFTP_ROOT"/bios/menu.cfg"
-NFS_SHARE="$mydir/hiveramfs"
+HTTP_ROOT="$mydir/hiveramfs"
 SYS_CONF=$mydir"/configs"
 
 
 #install package
 need_install=
-dpkg -s nfs-kernel-server > /dev/null 2>&1
-[[ $? -ne 0 ]] && need_install="$need_install nfs-kernel-server"
-dpkg -s nfs-common  > /dev/null 2>&1
-[[ $? -ne 0 ]] && need_install="$need_install nfs-common"
 dpkg -s dnsmasq  > /dev/null 2>&1
 [[ $? -ne 0 ]] && need_install="$need_install dnsmasq"
+dpkg -s apache2  > /dev/null 2>&1
+[[ $? -ne 0 ]] && need_install="$need_install apache2"
+dpkg -s pv  > /dev/null 2>&1
+[[ $? -ne 0 ]] && need_install="$need_install pv"
+dpkg -s atftpd  > /dev/null 2>&1
+[[ $? -ne 0 ]] && need_install="$need_install atftpd"
 
 if [[ ! -z $need_install ]]; then
 	apt update
@@ -166,14 +168,9 @@ echo "" >> $SERVER_CONF
 echo "ARCH_NAME="$ARCH_NAME >> $SERVER_CONF
 echo "" >> $SERVER_CONF
 
-#exit
-
 #Change Boot config
-sed -i "/append/c append initrd=initrd.img ip=dhcp root=/dev/nfs  netboot=nfs nfsroot=${IP}:${NFS_SHARE} rw ram_fs_size=${FS_SIZE}M hive_fs_arch=${ARCH_NAME} text consoleblank=0 intel_pstate=disable net.ifnames=0 ipv6.disable=1 pci=noaer iommu=soft amdgpu.vm_fragment_size=9 radeon.si_support=0 radeon.cik_support=0 amdgpu.si_support=1 amdgpu.cik_support=1" $BOOT_CONF 
-
-#create
-sed -i "/hiveramfs/d" $SYS_CONF/etc/exports
-echo $NFS_SHARE" *(ro,sync,crossmnt,nohide,no_root_squash,no_subtree_check)" >> $SYS_CONF"/etc/exports"
+sed -i "/kernel/c kernel http://${IP}/hiveramfs/boot/vmlinuz" $BOOT_CONF
+sed -i "/append/c append initrd=http://${IP}/hiveramfs/boot/initrd-ram.img ip=dhcp root=http httproot=http://${IP}/hiveramfs/ ram_fs_size=${FS_SIZE}M hive_fs_arch=${ARCH_NAME} text consoleblank=0 intel_pstate=disable net.ifnames=0 ipv6.disable=1 pci=noaer iommu=soft amdgpu.vm_fragment_size=9 radeon.si_support=0 radeon.cik_support=0 amdgpu.si_support=1 amdgpu.cik_support=1" $BOOT_CONF 
 
 echo "port=0" > $SYS_CONF"/etc/dnsmasq.conf"
 echo "" >> $SYS_CONF"/etc/dnsmasq.conf"
@@ -184,31 +181,44 @@ echo "#change the IP-address to the real IP-address of the server" >> $SYS_CONF"
 echo "dhcp-range=$IP,proxy" >> $SYS_CONF"/etc/dnsmasq.conf"
 echo "dhcp-no-override" >> $SYS_CONF"/etc/dnsmasq.conf"
 echo "" >> $SYS_CONF"/etc/dnsmasq.conf"
-echo "enable-tftp" >> $SYS_CONF"/etc/dnsmasq.conf"
-echo "tftp-root=$TFTP_ROOT" >> $SYS_CONF"/etc/dnsmasq.conf"
+#echo "enable-tftp" >> $SYS_CONF"/etc/dnsmasq.conf"
+#echo "tftp-root=$TFTP_ROOT" >> $SYS_CONF"/etc/dnsmasq.conf"
 echo "" >> $SYS_CONF"/etc/dnsmasq.conf"
 echo "#change the IP-address to the real IP-address of the server" >> $SYS_CONF"/etc/dnsmasq.conf"
-echo "pxe-service=X86PC, "Boot BIOS PXE",/bios/pxelinux.0,$IP" >> $SYS_CONF"/etc/dnsmasq.conf"
+echo "pxe-service=X86PC, "Boot BIOS PXE",/bios/lpxelinux.0,$IP" >> $SYS_CONF"/etc/dnsmasq.conf"
 echo "pxe-service=BC_EFI, "Boot UEFI PXE-BC",/efi/grubnetx64.efi,$IP" >> $SYS_CONF"/etc/dnsmasq.conf"
 echo "pxe-service=X86-64_EFI, "Boot UEFI PXE-64",/efi/grubnetx64.efi,$IP" >> $SYS_CONF"/etc/dnsmasq.conf"
 
-cp /etc/exports $SYS_CONF"/etc/exports.bak"
 cp /etc/dnsmasq.conf $SYS_CONF"/etc/dnsmasq.bak"
-
-cp $SYS_CONF"/etc/exports" /etc
 cp $SYS_CONF"/etc/dnsmasq.conf" /etc
+echo "DNSMASQ_EXCEPT=lo" >> /etc/default/dnsmasq
+
+[[ ! -e /var/www/html/hiveramfs ]] && ln -s $HTTP_ROOT /var/www/html
+
+sed -e 's/^USE_INETD=true/USE_INETD=false/g' -i /etc/default/atftpd
+sed -i "/OPTIONS=/c OPTIONS=\"--tftpd-timeout 300 --retry-timeout 5 --mcast-port 1758 --mcast-addr 239.239.239.0-255 --mcast-ttl 1 --maxthread 100 --verbose=5 ${TFTP_ROOT}\"" /etc/default/atftpd
+systemctl enable atftpd > /dev/null 2>&1
 
 res=0
-echo -n "> Restart NFS server. "
-/etc/init.d/nfs-kernel-server restart > /dev/null 2>&1
-if [[ $? -ne 0 ]];then
+echo -n "> Restart DNSMASQ server. "
+service dnsmasq restart 
+if [[ $? -ne 0 ]]; then
 	res=1
 	echo -e "${RED}FAILED${NOCOLOR}"
 else
 	echo -e "${GREEN}OK${NOCOLOR}"
 fi
-echo -n "> Restart DNSMASQ server. "
-service dnsmasq restart 
+echo -n "> Restart Apache server. "
+service apache2 restart 
+if [[ $? -ne 0 ]]; then
+	res=1
+	echo -e "${RED}FAILED${NOCOLOR}"
+else
+	echo -e "${GREEN}OK${NOCOLOR}"
+fi
+
+echo -n "> Restart Atftp server. "
+systemctl restart atftpd 
 if [[ $? -ne 0 ]]; then
 	res=1
 	echo -e "${RED}FAILED${NOCOLOR}"
