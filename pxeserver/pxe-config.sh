@@ -35,8 +35,8 @@ SYS_CONF=$mydir"/configs"
 need_install=
 dpkg -s dnsmasq  > /dev/null 2>&1
 [[ $? -ne 0 ]] && need_install="$need_install dnsmasq"
-dpkg -s apache2  > /dev/null 2>&1
-[[ $? -ne 0 ]] && need_install="$need_install apache2"
+dpkg -s nginx-extras  > /dev/null 2>&1
+[[ $? -ne 0 ]] && need_install="$need_install nginx-extras"
 dpkg -s pv  > /dev/null 2>&1
 [[ $? -ne 0 ]] && need_install="$need_install pv"
 dpkg -s atftpd  > /dev/null 2>&1
@@ -184,6 +184,9 @@ echo "" >> $SYS_CONF"/etc/dnsmasq.conf"
 #echo "enable-tftp" >> $SYS_CONF"/etc/dnsmasq.conf"
 #echo "tftp-root=$TFTP_ROOT" >> $SYS_CONF"/etc/dnsmasq.conf"
 echo "" >> $SYS_CONF"/etc/dnsmasq.conf"
+echo "dhcp-option-force=208,f1:00:74:7e" >> $SYS_CONF"/etc/dnsmasq.conf"
+echo "dhcp-option-force=211,30i" >> $SYS_CONF"/etc/dnsmasq.conf"
+echo "" >> $SYS_CONF"/etc/dnsmasq.conf"
 echo "#change the IP-address to the real IP-address of the server" >> $SYS_CONF"/etc/dnsmasq.conf"
 echo "pxe-service=X86PC, "Boot BIOS PXE",/bios/lpxelinux.0,$IP" >> $SYS_CONF"/etc/dnsmasq.conf"
 echo "pxe-service=BC_EFI, "Boot UEFI PXE-BC",/efi/grubnetx64.efi,$IP" >> $SYS_CONF"/etc/dnsmasq.conf"
@@ -193,23 +196,28 @@ cp /etc/dnsmasq.conf $SYS_CONF"/etc/dnsmasq.bak"
 cp $SYS_CONF"/etc/dnsmasq.conf" /etc
 echo "DNSMASQ_EXCEPT=lo" >> /etc/default/dnsmasq
 
+[[ ! -d /var/www/html ]] && mkdir -p /var/www/html
 [[ ! -e /var/www/html/hiveramfs ]] && ln -s $HTTP_ROOT /var/www/html
+cp -R /etc/nginx $SYS_CONF/etc/nginx.bak
+cp -R $SYS_CONF/etc/nginx /etc
 
 sed -e 's/^USE_INETD=true/USE_INETD=false/g' -i /etc/default/atftpd
 sed -i "/OPTIONS=/c OPTIONS=\"--tftpd-timeout 300 --retry-timeout 5 --mcast-port 1758 --mcast-addr 239.239.239.0-255 --mcast-ttl 1 --maxthread 100 --verbose=5 ${TFTP_ROOT}\"" /etc/default/atftpd
 systemctl enable atftpd > /dev/null 2>&1
 
+sysctl net.core.somaxconn=65535
+
 res=0
 echo -n "> Restart DNSMASQ server. "
-service dnsmasq restart 
+service dnsmasq restart
 if [[ $? -ne 0 ]]; then
 	res=1
 	echo -e "${RED}FAILED${NOCOLOR}"
 else
 	echo -e "${GREEN}OK${NOCOLOR}"
 fi
-echo -n "> Restart Apache server. "
-service apache2 restart 
+echo -n "> Restart Nginx server. "
+service nginx restart
 if [[ $? -ne 0 ]]; then
 	res=1
 	echo -e "${RED}FAILED${NOCOLOR}"
@@ -218,7 +226,7 @@ else
 fi
 
 echo -n "> Restart Atftp server. "
-systemctl restart atftpd 
+systemctl restart atftpd
 if [[ $? -ne 0 ]]; then
 	res=1
 	echo -e "${RED}FAILED${NOCOLOR}"

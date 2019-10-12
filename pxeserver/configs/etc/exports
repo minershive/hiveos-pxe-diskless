@@ -1,1 +1,0 @@
-/pxeserver/hiveramfs *(ro,sync,crossmnt,nohide,no_root_squash,no_subtree_check)

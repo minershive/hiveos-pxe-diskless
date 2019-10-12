@@ -66,6 +66,7 @@ mount --bind /dev ${TMP_DIR}/root/dev
 cat << EOF | chroot ${TMP_DIR}/root	
 export PATH="./:/hive/bin:/hive/sbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"
 echo "deb $HIVE_REPO_URL /" > /etc/apt/sources.list.d/hiverepo.list
+apt update
 serverupgrade
 echo $? > /exitcode
 EOF
@@ -75,7 +76,6 @@ EOF
 umount ${TMP_DIR}/root/proc
 umount ${TMP_DIR}/root/sys
 umount ${TMP_DIR}/root/dev
-
 
 [[ $(cat ${TMP_DIR}/root/exitcode) != 0 ]] && echo -e "${RED}Hive FS upgrade failed${NOCOLOR}" && exit 1
 rm ${TMP_DIR}/root/exitcode
@@ -119,5 +119,3 @@ echo
 echo -e "${GREEN}Update Hive FS successfull. To use updated HiveOS, reboot you rigs${NOCOLOR}"
 
 exit 0
-
-
