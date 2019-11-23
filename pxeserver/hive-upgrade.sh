@@ -60,6 +60,7 @@ echo
 mount proc -t proc ${TMP_DIR}/root/proc
 mount sys -t sysfs ${TMP_DIR}/root/sys
 mount --bind /dev ${TMP_DIR}/root/dev
+mount --bind /run ${TMP_DIR}/root/run
 #exit
 
 
@@ -76,6 +77,7 @@ EOF
 umount ${TMP_DIR}/root/proc
 umount ${TMP_DIR}/root/sys
 umount ${TMP_DIR}/root/dev
+umount ${TMP_DIR}/root/run
 
 [[ $(cat ${TMP_DIR}/root/exitcode) != 0 ]] && echo -e "${RED}Hive FS upgrade failed${NOCOLOR}" && exit 1
 rm ${TMP_DIR}/root/exitcode
