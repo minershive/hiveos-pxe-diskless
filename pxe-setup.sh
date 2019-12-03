@@ -36,11 +36,6 @@ while true; do
 		echo -e "${RED}> Please specify FULL PATH to destination dir${NOCOLOR}"
 done
 
-
-[[ -d ${dir}/pxeserver ]] && rm -R ${dir}/pxeserver
-mkdir -p ${dir}/pxeserver
-
-
 [[ -d /tmp/pxe-server ]] && rm -R /tmp/pxe-server
 mkdir -p /tmp/pxe-server > /dev/null 2>&1
 cd /tmp/pxe-server
@@ -59,8 +54,10 @@ fi
 cat /tmp/pxe-server/hiveos-pxe-diskless-master/pxeserver/hiveramfs/x* > /tmp/pxe-server/hiveos-pxe-diskless-master/pxeserver/hiveramfs/hiveramfs.tar.xz
 rm /tmp/pxe-server/hiveos-pxe-diskless-master/pxeserver/hiveramfs/x*
 [[ -f ${dir}/pxeserver/server.conf ]] && cp ${dir}/pxeserver/server.conf /tmp/pxe-server/hiveos-pxe-diskless-master/pxeserver
-[[ -d ${dir}/pxeserver/hiveramfs/hive-config ]] && cp -R ${dir}/pxeserver/hiveramfs/hive-config /tmp/pxe-server/hiveos-pxe-diskless-master/pxeserver/hiveramfs
+[[ -d ${dir}/pxeserver/hiveramfs/hive-config ]] && cp -R ${dir}/pxeserver/hiveramfs/hive-config/* /tmp/pxe-server/hiveos-pxe-diskless-master/pxeserver/hiveramfs/hive-config/
 
+[[ -d ${dir}/pxeserver ]] && rm -R ${dir}/pxeserver
+mkdir -p ${dir}/pxeserver
 
 
 echo
