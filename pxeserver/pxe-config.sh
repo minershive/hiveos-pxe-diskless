@@ -33,6 +33,9 @@ SYS_CONF=$mydir"/configs"
 
 #install package
 need_install=
+dpkg -s apache2  > /dev/null 2>&1
+[[ $? -eq 0 ]] && service apache2 stop > /dev/null 2>&1 && apt remove apache2 > /dev/null 2>&1
+
 dpkg -s dnsmasq  > /dev/null 2>&1
 [[ $? -ne 0 ]] && need_install="$need_install dnsmasq"
 dpkg -s nginx-extras  > /dev/null 2>&1
