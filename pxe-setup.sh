@@ -22,7 +22,7 @@ NOCOLOR='\033[0m'
 dir=""
 echo
 echo -e "Destination directory: ${YELLOW}${dir}/pxeserver${NOCOLOR}"
-echo "Press ENTER to continue with this URL or type a new one"
+echo "Press ENTER to continue with this destination or type a new one"
 while true; do
 		read dest
 		[[ -z $dest ]] && break
