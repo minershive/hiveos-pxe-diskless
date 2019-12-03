@@ -25,6 +25,30 @@ HIVE_REPO_URL=
 SERVER_CONF=$mydir"/server.conf"
 TMP_DIR=$mydir"/tmp"
 
+new_ver=
+cur_ver=
+
+[[ -f $mydir"/VER" ]] && cur_ver=`cat $mydir"/VER"`
+
+new_ver=`curl -j -f -s https://raw.githubusercontent.com/minershive/hiveos-pxe-diskless/master/pxeserver/VER`
+if [[ $? -ne 0 || -z $new_ver || -z $cur_ver || $new_ver != $cur_ver ]]; then
+	echo "You package of Hiveos PXE server is outdate."
+	echo "Need upgrade Hiveos PXE server. Otherwise correct work is not guaranteed"
+	upgrade="y"
+	echo -n "Do you want to upgrade Hiveos PXE server package [Y/n]?"
+	read upg
+	[[ ! -z $upg ]] && upgrade=$(echo ${upg,,} | cut -c 1)
+	if [[ $upgrade == "y" ]]; then
+		current_dir=`dirname $mydir`
+		sudo curl -j -f -s https://raw.githubusercontent.com/minershive/hiveos-pxe-diskless/master/pxe-setup.sh -o "/tmp/pxe-setup.sh"
+		[[ $? -ne 0 ]] && "Download install script failed! Exit" && exit 1
+		chmod +x /tmp/pxe-setup.sh
+		exec sudo /tmp/pxe-setup.sh $current_dir
+		exit 0
+	fi
+fi
+
+
 source $SERVER_CONF > /dev/null 2>&1
 FS="$mydir/hiveramfs/$ARCH_NAME"
 
