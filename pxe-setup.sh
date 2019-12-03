@@ -57,6 +57,7 @@ fi
 
 cat /tmp/pxe-server/hiveos-pxe-diskless-master/pxeserver/hiveramfs/x* > /tmp/pxe-server/hiveos-pxe-diskless-master/pxeserver/hiveramfs/hiveramfs.tar.xz
 rm /tmp/pxe-server/hiveos-pxe-diskless-master/pxeserver/hiveramfs/x*
+[[ -f ${dir}/pxeserver/server.conf ]] && cp ${dir}/pxeserver/server.conf /tmp/pxe-server/hiveos-pxe-diskless-master/pxeserver
 
 echo
 echo -e "${GREEN}> Copy PXE-server package to destination directory.${NOCOLOR}"
