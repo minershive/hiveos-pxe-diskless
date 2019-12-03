@@ -19,7 +19,7 @@ WHITE='\033[1;37m'
 NOCOLOR='\033[0m'
 
 
-dir=""
+dir=$1
 echo
 echo -e "Destination directory: ${YELLOW}${dir}/pxeserver${NOCOLOR}"
 echo "Press ENTER to continue with this destination or type a new one"
