@@ -46,8 +46,11 @@ dpkg -s atftpd  > /dev/null 2>&1
 [[ $? -ne 0 ]] && need_install="$need_install atftpd"
 
 if [[ ! -z $need_install ]]; then
-	apt update
-	apt install -y $need_install
+	echo "Install needed package. Plese wait"
+	apt update > /dev/null 2>&1
+	apt install -y $need_install > /dev/null 2>&1
+	echo "Done"
+	echo
 fi
 ######
 FARM_HASH=""
