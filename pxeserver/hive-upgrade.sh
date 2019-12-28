@@ -114,9 +114,9 @@ echo -e "${GREEN}Hive FS upgrade complete${NOCOLOR}"
 echo
 echo -e "> Create FS archive"
 tar -C root --lzma -cpf - . | pv -s $arch_size | cat > $ARCH_NAME
+res=$?
 #tar -C root --lzma -cpf - . | pv -s $(du -sb root | awk '{print $1}') | cat > $ARCH_NAME
 echo
-res=$?
 echo -e "> Check FS archive"
 pv $ARCH_NAME | tar -v -Jtf - | awk '{size+=$3} END {print size}' > size
 size=$(cat size)
