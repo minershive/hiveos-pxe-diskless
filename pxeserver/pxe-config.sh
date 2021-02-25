@@ -128,7 +128,7 @@ while true; do
 done
 
 
-[[ -z $FS_SIZE ]] && FS_SIZE=1400
+[[ -z $FS_SIZE ]] && FS_SIZE=2048
 echo -e "TMPFS size: ${YELLOW}$FS_SIZE Mb${NOCOLOR}"
 echo "Press ENTER to continue with this TMPFS size or type a new one (in MB)"
 

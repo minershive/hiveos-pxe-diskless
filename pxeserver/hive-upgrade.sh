@@ -81,10 +81,10 @@ pv $FS | tar --lzma -xf -
 echo
 echo -e "> Chrooting to Hive FS"
 echo
-mount proc -t proc ${TMP_DIR}/root/proc
-mount sys -t sysfs ${TMP_DIR}/root/sys
-mount --bind /dev ${TMP_DIR}/root/dev
-mount --bind /run ${TMP_DIR}/root/run
+mount --bind /proc ${TMP_DIR}/root/proc
+mount --bind /sys  ${TMP_DIR}/root/sys
+mount --bind /dev  ${TMP_DIR}/root/dev
+mount --bind /run  ${TMP_DIR}/root/run
 #exit
 
 
