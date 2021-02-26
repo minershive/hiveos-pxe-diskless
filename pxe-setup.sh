@@ -19,6 +19,12 @@ WHITE='\033[1;37m'
 NOCOLOR='\033[0m'
 
 
+if ! command -v unzip &> /dev/null
+then
+    echo -e "${RED}> Command 'unzip' not found.  Try 'apt install unzip'.${NOCOLOR}"
+    exit
+fi
+
 dir=$1
 [[ $dir == "/" ]] && dir=""
 echo
