@@ -19,6 +19,7 @@ WHITE='\033[1;37m'
 NOCOLOR='\033[0m'
 
 
+
 dir=$1
 [[ $dir == "/" ]] && dir=""
 echo
@@ -44,6 +45,8 @@ echo -e "${GREEN}> Download PXE-server package${NOCOLOR}"
 wget -t 5 --show-progress https://github.com/minershive/hiveos-pxe-diskless/archive/master.zip
 echo
 if [[ $? -eq 0 ]]; then
+    dpkg -s unzip  > /dev/null 2>&1
+    [[ $? -ne 0 ]] && apt-get install -y unzip
 	echo -e "${GREEN}> Extract PXE-server package.Please wait${NOCOLOR}"
 	unzip master.zip > /dev/null 2>&1
 else
