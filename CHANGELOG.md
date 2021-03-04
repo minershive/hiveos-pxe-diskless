@@ -2,7 +2,7 @@
 * Updated kernel firmware to latest 
 * Minor fixes
  
-#### 2021-02-25 Migrating Ubuntu 18.04 LTS
+#### 2021-02-25 Migrating to Stable Image based Ubuntu 18.04 LTS
 Based on latest Hive Stable Image
 * Linux kernel 5.4.99
 * Linux amdgpu kernel module  with supports up to "Big Navi" GPU
