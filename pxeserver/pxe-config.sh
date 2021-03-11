@@ -44,6 +44,9 @@ dpkg -s pv  > /dev/null 2>&1
 [[ $? -ne 0 ]] && need_install="$need_install pv"
 dpkg -s atftpd  > /dev/null 2>&1
 [[ $? -ne 0 ]] && need_install="$need_install atftpd"
+#added for uefi boot
+dpkg -s grub-efi-amd64  > /dev/null 2>&1 
+[[ $? -ne 0 ]] && need_install="$need_install grub-efi-amd64"
 
 if [[ ! -z $need_install ]]; then
 	echo "Install needed package. Plese wait"
@@ -128,7 +131,7 @@ while true; do
 done
 
 
-[[ -z $FS_SIZE ]] && FS_SIZE=2048
+[[ -z $FS_SIZE ]] && FS_SIZE=2500
 echo -e "TMPFS size: ${YELLOW}$FS_SIZE Mb${NOCOLOR}"
 echo "Press ENTER to continue with this TMPFS size or type a new one (in MB)"
 
@@ -239,7 +242,14 @@ if [[ $? -ne 0 ]]; then
 else
 	echo -e "${GREEN}OK${NOCOLOR}"
 fi
-
+#making uefi
+grub-mkimage -d /usr/lib/grub/x86_64-efi/ -O x86_64-efi -o /pxeserver/tftp/efi/grubnetx64.efi --prefix="(tftp,$IP)/efi" efinet tftp efi_uga efi_gop http
+chmod -R 777 /pxeserver/
+#make sed /pxeserver/tftp/efi/grub.cfg
+sed -i "/set net_default_server=/c set net_default_server=$IP" /pxeserver/tftp/efi/grub.cfg
+sed -i "/set fs_size=/c set fs_size=${FS_SIZE}M" /pxeserver/tftp/efi/grub.cfg
+sed -i "/set arch_name=/c set arch_name=$ARCH_NAME" /pxeserver/tftp/efi/grub.cfg
+#finished making uefi
 echo
 [[ $res != 0 ]] && echo -e "${RED}Server install failed${NOCOLOR}" && exit 1
 echo -e "${GREEN}Server ready to work${NOCOLOR}"
