@@ -29,12 +29,9 @@ Based on latest Hive Stable Image
 
 #### 2019-10-12 Fixes and improvements
 * changed apache to nginx
-* fixed nginx config
-* update installation manual
-
-#### 2019-10-09 Fixes and improvements
 * changed PXE to iPXE
 * changed nfs to http
-* replace dnsmasq-tftp to atftpd 
+* replace dnsmasq-tftp to atftpd
+* update installation manual
 
 #### 2019-07-23 Initial relase based on Stable Image (Ubuntu 16.04 LTS based)
