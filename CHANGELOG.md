@@ -1,3 +1,6 @@
+#### 2021-03-17 Replace some libs for RX 6X00
+* Minor fixes
+
 #### 2021-03-11 Fixed loading amdgpu driver
 * Added some missing firmware
 * Initial support OC for Nvidia cards (460.56 driver update)
