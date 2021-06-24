@@ -4,8 +4,8 @@ Network boot for diskless rigs
 Documentation
 https://forum.hiveos.farm/t/hive-os-diskless-pxe/12319
 
-Requires : sudo and xc-utils 
-```apt-get install -yqq sudo xc-utils```
+Requires : sudo and xz-utils 
+```apt-get install -yqq sudo xz-utils```
 
 For installation directly from the GitHub, execute the following command in the terminal:
 
