@@ -87,6 +87,8 @@ mount --bind /dev  ${TMP_DIR}/root/dev
 mount --bind /run  ${TMP_DIR}/root/run
 #exit
 
+mv ./etc/resolv.conf{,.bak}
+cp /etc/resolv.conf ./etc/resolv.conf
 
 cat << EOF | chroot ${TMP_DIR}/root	
 export PATH="./:/hive/bin:/hive/sbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"
