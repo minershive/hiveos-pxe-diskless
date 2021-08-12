@@ -1,3 +1,10 @@
+#### 2021-08-12 update kernel version
+* Update kernel to 5.10.0-hiveos
+* Update Nvidia driver to 465.24.02
+* Update Amdgpu driver to latest
+* Added amdgpu firmware for Radeon 6600
+* Minor fixes
+
 #### 2021-03-17 Replace some libs for RX 6X00
 * Minor fixes
 
