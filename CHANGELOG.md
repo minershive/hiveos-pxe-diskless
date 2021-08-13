@@ -1,3 +1,6 @@
+#### 2021-08-13 Minor fix
+* Minor fix
+
 #### 2021-08-12 update kernel version
 * Update kernel to 5.10.0-hiveos
 * Update Nvidia driver to 465.24.02
