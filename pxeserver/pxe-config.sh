@@ -47,6 +47,9 @@ dpkg -s atftpd  > /dev/null 2>&1
 #added for uefi boot
 dpkg -s grub-efi-amd64  > /dev/null 2>&1 
 [[ $? -ne 0 ]] && need_install="$need_install grub-efi-amd64"
+#adde pxz
+dpkg -s pxz  > /dev/null 2>&1 
+[[ $? -ne 0 ]] && need_install="$need_install pxz"
 
 if [[ ! -z $need_install ]]; then
 	echo "Install needed package. Plese wait"

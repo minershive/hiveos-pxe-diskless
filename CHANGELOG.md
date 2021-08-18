@@ -1,3 +1,8 @@
+#### 2021-08-18 Minor fix
+* Fix and update (0.6-208) hiveramfs image
+* Add pxz (parallel LZMA compressor using liblzma) for fast multi thread compressing
+
+
 #### 2021-08-13 Minor fix
 * Minor fix
 

@@ -115,7 +115,7 @@ echo
 echo -e "${GREEN}Hive FS upgrade complete${NOCOLOR}"
 echo
 echo -e "> Create FS archive"
-tar -C root --lzma -cpf - . | pv -s $arch_size | cat > $ARCH_NAME
+tar -C root -I pxz -cpf - . | pv -s $arch_size | cat > $ARCH_NAME
 res=$?
 #tar -C root --lzma -cpf - . | pv -s $(du -sb root | awk '{print $1}') | cat > $ARCH_NAME
 echo
@@ -132,7 +132,7 @@ fi
 size=$(echo $size | awk '{ $1 = $1/1024**2}1')
 echo
 echo -e "${GREEN}Create FS archive successfull. Size of FS:${YELLOW} "$size" Mb${NOCOLOR}"
-echo -e "${GREEN}Recommended size of tmpfs on the rigs: ${YELLOW}Not less than "$(( ${size%.*} + 150 ))" Mb${NOCOLOR}"
+echo -e "${GREEN}Recommended size of tmpfs on the rigs: ${YELLOW}Not less than "$(( ${size%.*} + 250 ))" Mb${NOCOLOR}"
 echo
 back=$mydir"/backup_fs/"$(basename $FS)"."`TZ=UTC date +'%y%m%d'`".bak"
 echo -e "> Backup old FS archive to "$back
