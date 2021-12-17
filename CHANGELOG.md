@@ -5,8 +5,8 @@
 * Update NVIDIA drivers to version 470.86
 * AMD OpenCL & NVIDIA drivers replaced to standalone archives (opencl-21.40.1.tar.xz & nvidia-470.86.tar.xz)
 * Add two new boot options (opencl_version and nvidia_version)
-*    e.g. "opencl_version=opencl-21.40.1.tar.xz nvidia_version=nvidia-470.86.tar.xz", 
-*    in future releases will be added some others versions...
+    e.g. "opencl_version=opencl-21.40.1.tar.xz nvidia_version=nvidia-470.86.tar.xz", 
+    in future releases will be added some others versions...
 
 
 #### 2021-08-18 Minor fix
