@@ -29,7 +29,8 @@ TFTP_ROOT=$mydir"/tftp"
 BOOT_CONF=$TFTP_ROOT"/bios/menu.cfg"
 HTTP_ROOT="$mydir/hiveramfs"
 SYS_CONF=$mydir"/configs"
-
+OCL_VER=opencl-21.40.1.tar.xz 
+NV_VER=nvidia-470.86.tar.xz
 
 #install package
 need_install=
@@ -182,7 +183,7 @@ echo "" >> $SERVER_CONF
 
 #Change Boot config
 sed -i "/kernel/c kernel http://${IP}/hiveramfs/boot/vmlinuz" $BOOT_CONF
-sed -i "/append/c append initrd=http://${IP}/hiveramfs/boot/initrd-ram.img ip=dhcp root=http httproot=http://${IP}/hiveramfs/ ram_fs_size=${FS_SIZE}M hive_fs_arch=${ARCH_NAME} text consoleblank=0 intel_pstate=disable net.ifnames=0 ipv6.disable=1 pci=noaer iommu=soft amdgpu.vm_fragment_size=9 radeon.si_support=0 radeon.cik_support=0 amdgpu.si_support=1 amdgpu.cik_support=1" $BOOT_CONF 
+sed -i "/append/c append initrd=http://${IP}/hiveramfs/boot/initrd-ram.img ip=dhcp root=http httproot=http://${IP}/hiveramfs/ ram_fs_size=${FS_SIZE}M hive_fs_arch=${ARCH_NAME} opencl_version=${OCL_VER} nvidia_version=${NV_VER} text consoleblank=0 intel_pstate=disable net.ifnames=0 ipv6.disable=1 pci=noaer iommu=soft amdgpu.vm_fragment_size=9 radeon.si_support=0 radeon.cik_support=0 amdgpu.si_support=1 amdgpu.cik_support=1" $BOOT_CONF 
 
 echo "port=0" > $SYS_CONF"/etc/dnsmasq.conf"
 echo "" >> $SYS_CONF"/etc/dnsmasq.conf"
@@ -252,6 +253,8 @@ chmod -R 777 $mydir/
 sed -i "/set net_default_server=/c set net_default_server=$IP" $mydir/tftp/efi/grub.cfg
 sed -i "/set fs_size=/c set fs_size=${FS_SIZE}M" $mydir/tftp/efi/grub.cfg
 sed -i "/set arch_name=/c set arch_name=$ARCH_NAME" $mydir/tftp/efi/grub.cfg
+sed -i "/set opencl_version=/c set opencl_version=$OCL_VER" $mydir/tftp/efi/grub.cfg
+sed -i "/set nvidia_version=/c set nvidia_version=$NV_VER" $mydir/tftp/efi/grub.cfg
 #finished making uefi
 echo
 [[ $res != 0 ]] && echo -e "${RED}Server install failed${NOCOLOR}" && exit 1
