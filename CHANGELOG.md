@@ -1,3 +1,7 @@
+#### 2021-12-28 Version 6.5
+* Minor image fix
+* Fix Opencl loader
+
 #### 2021-12-17 Version 6.4
 * synced with Hive client v0.6-212
 * NEW Linux kernel 5.15
