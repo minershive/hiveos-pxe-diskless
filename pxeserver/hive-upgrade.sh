@@ -94,6 +94,8 @@ cat << EOF | chroot ${TMP_DIR}/root
 export PATH="./:/hive/bin:/hive/sbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"
 echo "deb $HIVE_REPO_URL /" > /etc/apt/sources.list.d/hiverepo.list
 apt update
+[[ "$ADDITIONAL_PACKAGES" != "" ]] && apt install -y $ADDITIONAL_PACKAGES
+[[ "$REMOVED_PACKPAGES" != "" ]] && apt remove -y $REMOVED_PACKPAGES
 serverupgrade
 echo $? > /exitcode
 EOF

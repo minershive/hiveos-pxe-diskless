@@ -164,6 +164,22 @@ while true; do
 done
 echo 
 
+[[ -z $ADDITIONAL_PACKAGES ]] && ADDITIONAL_PACKAGES=""
+echo -e "Add more packages (eg: hive-miners-phoenixminer): ${YELLOW}$ADDITIONAL_PACKAGES${NOCOLOR}"
+echo "Press ENTER to continue or type a new one. Use a space to separate multiple packages."
+read additionalpkgs
+ADDITIONAL_PACKAGES=$additionalpkgs
+echo -e "New additional packages: ${YELLOW}$ADDITIONAL_PACKAGES${NOCOLOR}"
+echo
+
+[[ -z $REMOVED_PACKPAGES ]] && REMOVED_PACKPAGES=""
+echo -e "Remove these packages (eg: firefox): ${YELLOW}$REMOVED_PACKPAGES${NOCOLOR}"
+echo "Press ENTER to continue or type a new one. Use a space to separate multiple packages."
+read removedpkgs
+REMOVED_PACKPAGES=$removedpkgs
+echo -e "New removed packages: ${YELLOW}$REMOVED_PACKPAGES${NOCOLOR}"
+echo 
+
 echo -e "${GREEN}Config complete${NOCOLOR}" 
 echo "++++++++++++++++++"
 
@@ -179,6 +195,10 @@ echo "" >> $SERVER_CONF
 echo "FS_SIZE="$FS_SIZE >> $SERVER_CONF
 echo "" >> $SERVER_CONF
 echo "ARCH_NAME="$ARCH_NAME >> $SERVER_CONF
+echo "" >> $SERVER_CONF
+echo "ADDITIONAL_PACKAGES=\""$ADDITIONAL_PACKAGES"\"" >> $SERVER_CONF
+echo "" >> $SERVER_CONF
+echo "REMOVED_PACKPAGES=\""$REMOVED_PACKPAGES"\"" >> $SERVER_CONF
 echo "" >> $SERVER_CONF
 
 #Change Boot config
