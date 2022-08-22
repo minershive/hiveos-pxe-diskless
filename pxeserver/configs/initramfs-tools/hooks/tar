@@ -1,0 +1,16 @@
+#!/bin/sh -e
+PREREQS=""
+case $1 in
+        prereqs) echo "${PREREQS}"; exit 0;;
+esac
+. /usr/share/initramfs-tools/hook-functions
+
+if [ -x /bin/tar ]
+then
+    copy_exec /bin/tar /bin
+fi
+
+if [ -x /usr/bin/tar ]
+then
+    copy_exec /usr/bin/tar /bin
+fi

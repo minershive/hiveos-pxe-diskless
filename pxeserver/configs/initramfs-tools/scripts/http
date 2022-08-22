@@ -1,0 +1,148 @@
+# HTTP Hiveon filesystem mounting			-*- shell-script -*-
+
+# FIXME This needs error checking
+
+http_top()
+{
+	if [ "${http_top_used}" != "yes" ]; then
+		[ "$quiet" != "y" ] && log_begin_msg "Running /scripts/http-top"
+		run_scripts /scripts/http-top
+		[ "$quiet" != "y" ] && log_end_msg
+	fi
+	http_top_used=yes
+}
+
+http_premount()
+{
+	if [ "${http_premount_used}" != "yes" ]; then
+		[ "$quiet" != "y" ] && log_begin_msg "Running /scripts/http-premount"
+		run_scripts /scripts/nhttp-premount
+		[ "$quiet" != "y" ] && log_end_msg
+	fi
+	http_premount_used=yes
+}
+
+http_bottom()
+{
+	if [ "${http_premount_used}" = "yes" ] || [ "${http_top_used}" = "yes" ]; then
+		[ "$quiet" != "y" ] && log_begin_msg "Running /scripts/http-bottom"
+		run_scripts /scripts/http-bottom
+		[ "$quiet" != "y" ] && log_end_msg
+	fi
+	http_premount_used=no
+	http_top_used=no
+}
+
+# parse nfs bootargs and mount nfs
+http_mount_root_impl()
+{
+	configure_networking
+
+	
+}
+
+# HTTP root mounting
+http_mount_root()
+{
+	http_top
+
+	modprobe af_packet
+
+	wait_for_udev 10
+
+	# Default delay is around 180s
+	delay=${ROOTDELAY:-180}
+
+	# loop until httpmount succeeds
+	http_mount_root_impl
+	ret=$?
+	http_retry_count=0
+	while [ ${http_retry_count} -lt ${delay} ] \
+		&& [ $ret -ne 0 ] ; do
+		[ "$quiet" != "y" ] && log_begin_msg "Retrying http mount"
+		/bin/sleep 1
+		http_mount_root_impl
+		ret=$?
+		http_retry_count=$(( ${http_retry_count} + 1 ))
+		[ "$quiet" != "y" ] && log_end_msg
+	done
+	echo "Create tmpfs for root dir"
+	mount -t tmpfs -o size=${ram_fs_size} tmpfs ${rootmnt}
+	cd ${rootmnt}
+	echo "Download and extract FS to RAM"
+	fs_size=$(curl -sI ${httproot}${hive_fs_arch} 2>&1 | grep "Length" | awk '{print $2}')
+	curl -s ${httproot}${hive_fs_arch} | pv -s $fs_size | tar --lzma -xf -
+
+	### Get Opencl files
+	echo "Download and extract OPENCL libs"
+	fs_size=$(curl -sI ${httproot}${opencl_version} 2>&1 | grep "Length" | awk '{print $2}')
+	curl -s ${httproot}${opencl_version} | pv -s $fs_size | tar --lzma -xf -
+
+	### Get NVIDIA files
+	echo "Download and extract NVIDIA libs and modules"
+	fs_size=$(curl -sI ${httproot}${nvidia_version} 2>&1 | grep "Length" | awk '{print $2}')
+	curl -s ${httproot}/nvidia/${nvidia_version} | pv -s $fs_size | tar --lzma -xf -
+	[[ $? == 0 ]] && log_end_msg
+
+	/bin/wget2 -q --spider ${httproot}hive-config/
+	if [[ $? == 0 ]]; then
+		cd hive-config
+		NDIR=$((`echo "${httproot}hive-config/"|sed 's|[^/]||g;s|/$||'|wc -c` - 3))
+		/bin/wget2 -q -nH --no-parent -r --cut-dirs=$NDIR "${httproot}hive-config/"
+		/bin/find -type f -name "index*" -exec rm -f {} \;
+		echo "Create FS in RAM successfull"
+	else
+		echo "Error. Config not found!"
+	fi
+sleep 3
+}
+
+http_mount_fs_impl()
+{
+	configure_networking
+
+	http_premount
+
+	read_fstab_entry "$1"
+
+}
+
+http_mount_fs()
+{
+	http_top
+
+	# For DHCP
+	modprobe af_packet
+
+	wait_for_udev 10
+
+	# Default delay is around 180s
+	delay=${ROOTDELAY:-180}
+
+	# Don't loop here; we can't sanely check if it worked like for
+	# the rootfs or /etc.
+	http_mount_fs_impl "$1"
+}
+
+mountroot()
+{
+	http_mount_root
+}
+
+mount_top()
+{
+	# Note, also called directly in case it's overridden.
+	http_top
+}
+
+mount_premount()
+{
+	# Note, also called directly in case it's overridden.
+	http_premount
+}
+
+mount_bottom()
+{
+	# Note, also called directly in case it's overridden.
+	http_bottom
+}
