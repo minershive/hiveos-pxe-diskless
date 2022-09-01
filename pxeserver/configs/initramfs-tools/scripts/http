@@ -73,6 +73,10 @@ http_mount_root()
 	fs_size=$(curl -sI ${httproot}${hive_fs_arch} 2>&1 | grep "Length" | awk '{print $2}')
 	curl -s ${httproot}${hive_fs_arch} | pv -s $fs_size | tar --lzma -xf -
 
+	echo "Download and extract firmwares"
+	fs_size=$(curl -sI ${httproot}/firmware.tar.xz 2>&1 | grep "Length" | awk '{print $2}')
+	curl -s ${httproot}/firmware.tar.xz | pv -s $fs_size | tar --lzma -xf -
+
 	### Get Opencl files
 	echo "Download and extract OPENCL libs"
 	fs_size=$(curl -sI ${httproot}${opencl_version} 2>&1 | grep "Length" | awk '{print $2}')
@@ -82,7 +86,14 @@ http_mount_root()
 	echo "Download and extract NVIDIA libs and modules"
 	fs_size=$(curl -sI ${httproot}${nvidia_version} 2>&1 | grep "Length" | awk '{print $2}')
 	curl -s ${httproot}/nvidia/${nvidia_version} | pv -s $fs_size | tar --lzma -xf -
+
+	echo "Download and extract Xorg libs and modules"
+	fs_size=$(curl -sI ${httproot}/X.tar.xz 2>&1 | grep "Length" | awk '{print $2}')
+	curl -s ${httproot}/X.tar.xz | pv -s $fs_size | tar --lzma -xf -
+
+	
 	[[ $? == 0 ]] && log_end_msg
+	
 
 	/bin/wget2 -q --spider ${httproot}hive-config/
 	if [[ $? == 0 ]]; then
