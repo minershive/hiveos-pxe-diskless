@@ -47,6 +47,22 @@ function echo_fail() {
 	exit 1
 }
 
+function show_help() {
+        echo "Usage:
+  deploy_pxe ubuntu18 --build           create latest Ubuntu 18.04 image
+  deploy_pxe ubuntu18 --upgrade         upgrade and repack rootfs imaage
+  deploy_pxe ubuntu18 --selfupgrade     just upgrade Hive package (need run upgrade after this)
+  deploy_pxe ubuntu18 --chroot          chroot into rootfs (for manual actions)
+  deploy_pxe ubuntu18 --initrd          rebuild initramfs image
+  deploy_pxe ubuntu18 --remove          delete rootfs folder
+
+Nvidia drivers:
+  deploy_pxe nvidia --list              list available driver versions
+  deploy_pxe nvidia --build <VER>       build driver specific version ( e.g. 495 or 510 or 510.39.01)
+"
+}
+
+
 ##NVIDIA PART
 CUDA_VER=(
     11.6 510.39.01
@@ -453,7 +469,7 @@ case $dist in
 	shift
 	;;
     *)
-	echo "12345"
+	show_help
 	exit 1
 	;;
 esac
@@ -489,10 +505,14 @@ create_fs() {
     echo "nameserver 127.0.0.53" > $DIR/etc/resolv.conf
     #Need for loadable custom modules
     echo "/sbin/depmod" >>  $DIR/lib/lsb/init-functions 
+    echo "/sbin/ldconfig" >>  $DIR/lib/lsb/init-functions 
     
     echo "user ALL=(ALL) NOPASSWD:ALL" >> $DIR/etc/sudoers
     sed -i 's|Defaults	secure_path|#Defaults	secure_path|' $DIR/etc/sudoers
     echo "SELECTED_EDITOR="/usr/bin/mcedit"" >  $DIR/home/user/.selected_editor
+    echo "SELECTED_EDITOR="/usr/bin/mcedit"" >  $DIR/root/.selected_editor
+    echo "motd" >> $DIR/home/user/.profile
+    echo "sudo -s" >> $DIR/home/user/.profile
     echo_ok
 }
 
@@ -606,36 +626,40 @@ deploy_fs() {
 	fi
 }
 
-
-
 echo2 "${GREEN}Prepare...${NOCOLOR}"
 echo ""
 
+
+
 if [[ $dist == "nvidia" ]]; then
 	case $1 in
-		list)
+	--list)
 		list_packages
 		exit 0
 		;;
-		build)
+	--build)
 		extract_kernel
 		shift
 		build_driver "$1"
 		exit $?
 		;;
+	*)
+		show_help
+		exit 1
+		;;
 	esac
 fi
 
 case $1 in
-    initrd)
+    --initrd)
 	create_initrd
 	exit $?
 	;;
-    umount)
+    --umount)
 	umount_need
 	exit $?
 	;;
-    upgrade)
+    --upgrade)
 	mount_need
 	upgrade_fs
 	clean_apt
@@ -643,18 +667,20 @@ case $1 in
 	deploy_fs
 	exit $?
 	;;
-    selfupgrade)
+    --selfupgrade)
 	mount_need
 	upgrade_fs
 	clean_apt
 	umount_need
 	exit $?
 	;;
-    test)
-	echo $0 $1 $dist
-	exit 0
+    --chroot)
+	mount_need
+	chroot $DIR
+	umount_need
+	exit $?
 	;; 
-    *)
+    --build)
 	create_fs
 	mount_need
 	add_apt
@@ -665,6 +691,10 @@ case $1 in
 	clean_apt
 	umount_need
 	deploy_fs
+	;;
+    *)
+	show_help
+	exit 1
 esac
 
 
