@@ -1,6 +1,7 @@
-#### 2021-12-28 Version 6.5
-* Minor image fix
-* Fix Opencl loader
+#### 2022-09-07 Version 6.5
+* Add new script 'deploy_pxe' to build|upgrade|customize rootfs image. see the 'deploy_pxe --help' command.
+* Add autobuild Nvidia driver image with specific version. Now stored in ${httproot}hivefamfs/nvidia.
+* After version 6.5, next version will be numbered 6.5.x for minor updates.
 
 #### 2021-12-17 Version 6.4
 * synced with Hive client v0.6-212
