@@ -1,3 +1,9 @@
+#### 2022-09-14 Version 6.5.1
+* Add libnuma1 in additional pkgs.(Need run --upgrade). Issues #9 and #10
+* Replace pixz over pxz (pxz is deprecated in Ubuntu 20.04). Issue#13
+* Update Readme and hive-upgrade.sh (use --build otion instead of --create). Issue#15
+* Create netboot directory for x86_64-efi before install grub-efi bootloader. Issue#16
+
 #### 2022-09-07 Version 6.5
 * Add new script 'deploy_pxe' to build|upgrade|customize rootfs image. see the 'deploy_pxe --help' command.
 * Add autobuild Nvidia driver image with specific version. Now stored in ${httproot}hivefamfs/nvidia.
@@ -12,7 +18,6 @@
 * Add two new boot options (opencl_version and nvidia_version)
     e.g. "opencl_version=opencl-21.40.1.tar.xz nvidia_version=nvidia-470.86.tar.xz", 
     in future releases will be added some others versions...
-
 
 #### 2021-08-18 Minor fix
 * Fix and update (0.6-208) hiveramfs image

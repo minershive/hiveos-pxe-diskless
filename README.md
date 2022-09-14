@@ -13,7 +13,7 @@ For installation directly from the GitHub, execute the following command in the 
 
 ```cd  path_to_pxeserver```
 
-Type ```./deploy_pxe ubunru18 --create```.
+Type ```./deploy_pxe ubuntu18 --build```.
 This command create new hiveramfs image in pxeserver/hiveramfs/ folder. Rootfs stored in pxeserver/build/ubuntu18/_fs.
 Try ```./deploy_pxe --help``` for see more options
 

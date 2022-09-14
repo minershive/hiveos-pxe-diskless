@@ -54,8 +54,11 @@ else
 	exit 1
 fi
 
-cat /tmp/pxe-server/hiveos-pxe-diskless-master/pxeserver/hiveramfs/x* > /tmp/pxe-server/hiveos-pxe-diskless-master/pxeserver/hiveramfs/hiveramfs.tar.xz
-rm /tmp/pxe-server/hiveos-pxe-diskless-master/pxeserver/hiveramfs/x*
+##No need after 6.5 version.
+#cat /tmp/pxe-server/hiveos-pxe-diskless-master/pxeserver/hiveramfs/x* > /tmp/pxe-server/hiveos-pxe-diskless-master/pxeserver/hiveramfs/hiveramfs.tar.xz
+#rm /tmp/pxe-server/hiveos-pxe-diskless-master/pxeserver/hiveramfs/x*
+##
+
 [[ -f ${dir}/pxeserver/server.conf ]] && cp ${dir}/pxeserver/server.conf /tmp/pxe-server/hiveos-pxe-diskless-master/pxeserver
 [[ -d ${dir}/pxeserver/hiveramfs/hive-config ]] && cp -R ${dir}/pxeserver/hiveramfs/hive-config/* /tmp/pxe-server/hiveos-pxe-diskless-master/pxeserver/hiveramfs/hive-config/
 

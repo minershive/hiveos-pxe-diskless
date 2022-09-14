@@ -390,7 +390,7 @@ function build_driver() { # @url or @file, @force_install
     
     #Create archive 
     echo2 "Create archive..."
-    tar -C $mydir/$build_dir -cpf - . | pxz -T0 -9fe > $mydir/$build_dir.tar.xz
+    tar -C $mydir/$build_dir -cpf - . | pixz -9 -e > $mydir/$build_dir.tar.xz
     [[ $? -ne 0 ]] && echo_fail
     echo_ok
     #Clear folders
@@ -566,7 +566,7 @@ upgrade_fs() {
     fi
     echo_ok
     echo2 "Install additional packages..."
-    chroot $DIR apt -y install mc busybox-static > /dev/null 2>&1
+    chroot $DIR apt -y install mc busybox-static libnuma1 > /dev/null 2>&1
     echo_ok
 }
 
@@ -616,7 +616,7 @@ deploy_fs() {
 	echo ""    
 	echo2 "Saving to $filepath ..."
 	echo ""
-	tar -C $DIR --exclude='boot/*' --exclude='usr/src/*' --exclude='dev/*' -cpf - . | pv -s ${dir_size}M | pxz -T0 -9fe > $filepath
+	tar -C $DIR --exclude='boot/*' --exclude='usr/src/*' --exclude='dev/*' -cpf - . | pv -s ${dir_size}M | pixz -9 -e > $filepath
 	if [[ $? -eq 0 ]]; then
 	    echo2 "Create symlink ..."
 	    if [[ -e $mydir/hiveramfs/hiveramfs.tar.xz ]]; then 

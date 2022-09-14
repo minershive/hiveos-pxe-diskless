@@ -49,8 +49,8 @@ dpkg -s atftpd  > /dev/null 2>&1
 dpkg -s grub-efi-amd64  > /dev/null 2>&1 
 [[ $? -ne 0 ]] && need_install="$need_install grub-efi-amd64"
 #adde pxz
-dpkg -s pxz  > /dev/null 2>&1 
-[[ $? -ne 0 ]] && need_install="$need_install pxz"
+dpkg -s pixz  > /dev/null 2>&1 
+[[ $? -ne 0 ]] && need_install="$need_install pixz"
 
 if [[ ! -z $need_install ]]; then
 	echo "Install needed package. Plese wait"
@@ -246,8 +246,10 @@ if [[ $? -ne 0 ]]; then
 else
 	echo -e "${GREEN}OK${NOCOLOR}"
 fi
+##Create Netboot directory for x86_64-efi.
+grub-mknetdir --net-directory="$mydir"/tftp/ --subdir=/efi/ -d /usr/lib/grub/x86_64-efi/
 #making uefi
-grub-mkimage -d /usr/lib/grub/x86_64-efi/ -O x86_64-efi -o $mydir/tftp/efi/grubnetx64.efi --prefix="(tftp,$IP)/efi" efinet tftp efi_uga efi_gop http
+grub-mkimage -d $mydir/tftp/efi/x86_64-efi/ -O x86_64-efi -o $mydir/tftp/efi/grubnetx64.efi --prefix="(tftp,$IP)/efi" efinet tftp efi_uga efi_gop http
 chmod -R 777 $mydir/
 #make sed $mydir/tftp/efi/grub.cfg
 sed -i "/set net_default_server=/c set net_default_server=$IP" $mydir/tftp/efi/grub.cfg

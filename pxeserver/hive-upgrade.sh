@@ -92,7 +92,7 @@ if [[ $? -ne 0 || -z $new_ver || -z $cur_ver || $new_ver != $cur_ver ]]; then
 fi
 
 echo -e "${BRED}Upgrade FS is deprecated!${NOCOLOR}"
-echo -e "To upgrade fs after 6.4 version use command ${YELLOW}'./deploy_pxe ubuntu18 --create'${NOCOLOR} to create new image and then ${YELLOW}'./deploy_pxe ubuntu18 --upgrade'${NOCOLOR} to upgrade him"
+echo -e "To upgrade fs after 6.4 version use command ${YELLOW}'./deploy_pxe ubuntu18 --build'${NOCOLOR} to create new image and then ${YELLOW}'./deploy_pxe ubuntu18 --upgrade'${NOCOLOR} to upgrade him"
 echo -e "${BRED}This script will be remove in future!${NOCOLOR}"
 exit 0
 
