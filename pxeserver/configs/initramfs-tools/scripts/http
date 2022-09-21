@@ -94,7 +94,12 @@ http_mount_root()
 	
 	[[ $? == 0 ]] && log_end_msg
 	
-
+	#Probe custom config
+	/bin/wget2 -q --spider ${httproot}${ethaddr}/hive-config/
+	if [[ $? == 0 ]]; then
+		echo "Found custom config for $ethaddr..."
+		httproot=${httproot}${ethaddr}/
+	fi
 	/bin/wget2 -q --spider ${httproot}hive-config/
 	if [[ $? == 0 ]]; then
 		cd hive-config
@@ -105,7 +110,6 @@ http_mount_root()
 	else
 		echo "Error. Config not found!"
 	fi
-sleep 3
 }
 
 http_mount_fs_impl()
