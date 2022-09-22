@@ -1,3 +1,13 @@
+#### 2022-09-22 Version 6.5.2
+* Fix grub-mkimage. Issue#18
+* Fix boot cmdline option ("boot=http" over "root=http") Issue#17
+* Add missing symlink in Xorg image
+* Initial custom config support.
+    For now can create personal config for each PXE rig.
+    Just create path %pxeserver%/hiveramfs/aa:bb:cc:dd:ee:ff/hive-config/rig.conf
+    Where aa:bb:cc:dd:ee:ff is mac address of your rig.
+    If path not exist, will be used default path %pxeserver%/hiveramfs/hive-config/rig.conf
+
 #### 2022-09-14 Version 6.5.1
 * Add libnuma1 in additional pkgs.(Need run --upgrade). Issues #9 and #10
 * Replace pixz over pxz (pxz is deprecated in Ubuntu 20.04). Issue#13
