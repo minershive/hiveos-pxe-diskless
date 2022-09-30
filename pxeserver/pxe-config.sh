@@ -49,8 +49,8 @@ dpkg -s atftpd  > /dev/null 2>&1
 dpkg -s grub-efi-amd64  > /dev/null 2>&1 
 [[ $? -ne 0 ]] && need_install="$need_install grub-efi-amd64"
 #adde pxz
-dpkg -s pxz  > /dev/null 2>&1 
-[[ $? -ne 0 ]] && need_install="$need_install pxz"
+dpkg -s pixz  > /dev/null 2>&1 
+[[ $? -ne 0 ]] && need_install="$need_install pixz"
 
 if [[ ! -z $need_install ]]; then
 	echo "Install needed package. Plese wait"
@@ -203,7 +203,7 @@ echo "" >> $SERVER_CONF
 
 #Change Boot config
 sed -i "/kernel/c kernel http://${IP}/hiveramfs/boot/vmlinuz" $BOOT_CONF
-sed -i "/append/c append initrd=http://${IP}/hiveramfs/boot/initrd-ram.img ip=dhcp root=http httproot=http://${IP}/hiveramfs/ ram_fs_size=${FS_SIZE}M hive_fs_arch=${ARCH_NAME} opencl_version=${OCL_VER} nvidia_version=${NV_VER} text consoleblank=0 intel_pstate=disable net.ifnames=0 ipv6.disable=1 pci=noaer iommu=soft amdgpu.vm_fragment_size=9 radeon.si_support=0 radeon.cik_support=0 amdgpu.si_support=1 amdgpu.cik_support=1" $BOOT_CONF 
+sed -i "/append/c append initrd=http://${IP}/hiveramfs/boot/initrd-ram.img ip=dhcp ethaddr=${net_default_mac} boot=http httproot=http://${IP}/hiveramfs/ ram_fs_size=${FS_SIZE}M hive_fs_arch=${ARCH_NAME} opencl_version=${OCL_VER} nvidia_version=${NV_VER} text consoleblank=0 intel_pstate=disable net.ifnames=0 ipv6.disable=1 pci=noaer iommu=soft amdgpu.vm_fragment_size=9 radeon.si_support=0 radeon.cik_support=0 amdgpu.si_support=1 amdgpu.cik_support=1 amdgpu.ppfeaturemask=0xffffffff" $BOOT_CONF 
 
 echo "port=0" > $SYS_CONF"/etc/dnsmasq.conf"
 echo "" >> $SYS_CONF"/etc/dnsmasq.conf"
@@ -266,6 +266,8 @@ if [[ $? -ne 0 ]]; then
 else
 	echo -e "${GREEN}OK${NOCOLOR}"
 fi
+##Create Netboot directory for x86_64-efi.
+grub-mknetdir --net-directory="$mydir"/tftp/ --subdir=/efi/ -d /usr/lib/grub/x86_64-efi/
 #making uefi
 grub-mkimage -d /usr/lib/grub/x86_64-efi/ -O x86_64-efi -o $mydir/tftp/efi/grubnetx64.efi --prefix="(tftp,$IP)/efi" efinet tftp efi_uga efi_gop http
 chmod -R 777 $mydir/

@@ -25,6 +25,37 @@ HIVE_REPO_URL=
 SERVER_CONF=$mydir"/server.conf"
 TMP_DIR=$mydir"/tmp"
 
+function check_version () {
+    if [[ $1 == $2 ]]
+    then
+        return 0
+    fi
+    local IFS=.
+    local i ver1=($1) ver2=($2)
+    # fill empty fields in ver1 with zeros
+    for ((i=${#ver1[@]}; i<${#ver2[@]}; i++))
+    do
+        ver1[i]=0
+    done
+    for ((i=0; i<${#ver1[@]}; i++))
+    do
+        if [[ -z ${ver2[i]} ]]
+        then
+            # fill empty fields in ver2 with zeros
+            ver2[i]=0
+        fi
+        if ((10#${ver1[i]} > 10#${ver2[i]}))
+        then
+            return 1
+        fi
+        if ((10#${ver1[i]} < 10#${ver2[i]}))
+        then
+            return 2
+        fi
+    done
+    return 0
+}
+
 new_ver=
 cur_ver=
 
@@ -32,22 +63,38 @@ cur_ver=
 
 new_ver=`curl -j -f -s https://raw.githubusercontent.com/minershive/hiveos-pxe-diskless/master/pxeserver/VER`
 if [[ $? -ne 0 || -z $new_ver || -z $cur_ver || $new_ver != $cur_ver ]]; then
-	echo "You package of Hiveos PXE server is outdate."
-	echo "Need upgrade Hiveos PXE server. Otherwise correct work is not guaranteed"
-	upgrade="y"
-	echo -n "Do you want to upgrade Hiveos PXE server package [Y/n]?"
-	read upg
-	[[ ! -z $upg ]] && upgrade=$(echo ${upg,,} | cut -c 1)
-	if [[ $upgrade == "y" ]]; then
-		current_dir=`dirname $mydir`
-		sudo curl -j -f -s https://raw.githubusercontent.com/minershive/hiveos-pxe-diskless/master/pxe-setup.sh -o "/tmp/pxe-setup.sh"
-		[[ $? -ne 0 ]] && "Download install script failed! Exit" && exit 1
-		chmod +x /tmp/pxe-setup.sh
-		exec sudo /tmp/pxe-setup.sh $current_dir
-		exit 0
-	fi
+	check_version $cur_ver $new_ver
+	case $? in
+	    0)
+		echo "You package of Hiveos PXE server is up to date."
+		exit 1
+		;;
+	    1)
+		echo "You package of Hiveos PXE server is newer than pkg in repo)))."
+		exit 1
+		;;
+	    2)
+		echo -e "You package of Hiveos PXE server ${YELLOW}($cur_ver)${NOCOLOR} is outdate. Found new version ${YELLOW}($new_ver)${NOCOLOR}. "
+		echo "Need upgrade Hiveos PXE server. Otherwise correct work is not guaranteed"
+		upgrade="y"
+		echo -n "Do you want to upgrade Hiveos PXE server package [Y/n]?"
+		read upg
+		[[ ! -z $upg ]] && upgrade=$(echo ${upg,,} | cut -c 1)
+		if [[ $upgrade == "y" ]]; then
+			current_dir=`dirname $mydir`
+			sudo curl -j -f -s https://raw.githubusercontent.com/minershive/hiveos-pxe-diskless/master/pxe-setup.sh -o "/tmp/pxe-setup.sh"
+			[[ $? -ne 0 ]] && "Download install script failed! Exit" && exit 1
+			chmod +x /tmp/pxe-setup.sh
+			exec sudo /tmp/pxe-setup.sh $current_dir
+			exit 0
+		fi
+	esac
 fi
 
+echo -e "${BRED}Upgrade FS is deprecated!${NOCOLOR}"
+echo -e "To upgrade fs after 6.4 version use command ${YELLOW}'./deploy_pxe ubuntu18 --build'${NOCOLOR} to create new image and then ${YELLOW}'./deploy_pxe ubuntu18 --upgrade'${NOCOLOR} to upgrade him"
+echo -e "${BRED}This script will be remove in future!${NOCOLOR}"
+exit 0
 
 source $SERVER_CONF > /dev/null 2>&1
 FS="$mydir/hiveramfs/$ARCH_NAME"
