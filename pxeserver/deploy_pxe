@@ -573,12 +573,8 @@ upgrade_fs() {
     fi
     echo_ok
     echo2 "Install additional packages..."
-<<<<<<< HEAD
     chroot $DIR apt -y install mc busybox-static libnuma1 psmisc x11-xkb-utils gettext-base \
 				pciutils > /dev/null 2>&1
-=======
-    chroot $DIR apt -y install mc busybox-static libnuma1 psmisc x11-xkb-utils gettext-base > /dev/null 2>&1
->>>>>>> 6c7f97ae9ec08ac2605e449e3a7ba5b23293ce0c
     echo_ok
 }
 
