@@ -30,6 +30,7 @@ dist=$1
 command=$2
 
 DIR=`pwd`/build/$dist/_fs
+kern_ver=`dpkg -I kernel/linux-image-*.deb | grep Package: |sed -r 's/.*linux-image-//'`
 hiverepo=http://download.hiveos.farm/repo/binary
 include="sudo,curl,wget,systemd,initramfs-tools,net-tools,pv,tar,xz-utils"
 
@@ -351,12 +352,12 @@ function build_driver() { # @url or @file, @force_install
 
     #Build from source
     echo2 "Build NVIDIA-$ver driver (`nproc` CPU cores)..."
-    mkdir -p $mydir/$build_dir/lib/modules/5.15.0-hiveos/kernel/drivers/video
-    cd ${basename%.*}/kernel/ && make -j `nproc` SYSSRC=$mydir/build/_kernel/usr/src/linux-headers-5.15.0-hiveos/ M=$PWD IGNORE_CC_MISMATCH='' > $mydir/${DRVPATH}make-$ver.log 2>&1
+    mkdir -p $mydir/$build_dir/lib/modules/$kern_ver/kernel/drivers/video
+    cd ${basename%.*}/kernel/ && make -j `nproc` SYSSRC=$mydir/build/_kernel/$kern_ver/usr/src/linux-headers-$kern_ver/ M=$PWD IGNORE_CC_MISMATCH='1' > $mydir/${DRVPATH}make-$ver.log 2>&1
     [[ $? -ne 0 ]] && echo -e "${RED}> Filed to build driver.${NOCOLOR}" && echo_fail
     echo_ok
     echo2 "Copy driver files..."
-    find . -type f -name "*.ko" -exec cp -r "{}" $mydir/$build_dir/lib/modules/5.15.0-hiveos/kernel/drivers/video \;
+    find . -type f -name "*.ko" -exec cp -r "{}" $mydir/$build_dir/lib/modules/$kern_ver/kernel/drivers/video \;
     [[ $? -ne 0 ]] && echo -e "${RED}> Filed to copy driver files.${NOCOLOR}" && echo_fail
     echo_ok
     #Copy libs 
@@ -427,15 +428,16 @@ create_initrd() {
     cp -r configs/initramfs-tools/* ${DIR}/etc/initramfs-tools/
     echo_ok
     echo2 "Create initramfs image..."
-    chroot ${DIR}  mkinitramfs -c xz -o /boot/initrd-ram.img 5.15.0-hiveos
+    #kern_ver=$(basename ${DIR}/lib/modules/*)
+    chroot ${DIR} mkinitramfs -c xz -o /boot/initrd-ram.img ${kern_ver}
     echo_ok
     echo2 "Create symlink..."
     mkdir -p build/$dist/boot
     cp -r ${DIR}/boot/initrd-ram.img build/$dist/boot/initrd-ram.img
-    cp -r ${DIR}/boot/vmlinuz-5.15.0-hiveos  build/$dist/boot/vmlinuz
+    cp -r ${DIR}/boot/vmlinuz-${kern_ver}  build/$dist/boot/vmlinuz
 
-    rm -rf $mydir/hiveramfs/boot/vmlinuz && ln -s $mydir/build/$dist/boot/vmlinuz $mydir/hiveramfs/boot/vmlinuz
-    rm -rf $mydir/hiveramfs/boot/initrd-ram.img && ln -s $mydir/build/$dist/boot/initrd-ram.img $mydir/hiveramfs/boot/initrd-ram.img
+    rm -rf $mydir/hiveramfs/boot/vmlinuz && ln -sf $mydir/build/$dist/boot/vmlinuz $mydir/hiveramfs/boot/vmlinuz
+    rm -rf $mydir/hiveramfs/boot/initrd-ram.img && ln -sf $mydir/build/$dist/boot/initrd-ram.img $mydir/hiveramfs/boot/initrd-ram.img
     echo_ok
 }
 
@@ -556,6 +558,11 @@ fi
 
 upgrade_fs() {
     echo2 "Upgrade FS..."
+    chroot $DIR locale-gen en_US.UTF-8 > /dev/null 2>&1
+    chroot $DIR update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 > /dev/null 2>&1
+    if [[ $? -ne 0 ]]; then
+	echo_fail
+    fi
     chroot $DIR apt -y update > /dev/null 2>&1
     if [[ $? -ne 0 ]]; then 
 	echo_fail
@@ -566,12 +573,14 @@ upgrade_fs() {
     fi
     echo_ok
     echo2 "Install additional packages..."
-    chroot $DIR apt -y install mc busybox-static libnuma1 psmisc x11-xkb-utils > /dev/null 2>&1
+    chroot $DIR apt -y install mc busybox-static libnuma1 psmisc x11-xkb-utils gettext-base > /dev/null 2>&1
     echo_ok
 }
 
 install_pkg() {
 	echo2 "Install Hiveon package..."
+#	chroot $DIR locale-gen en_US en_US.UTF-8 > /dev/null 2>&1
+#	chroot $DIR update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 > /dev/null 2>&1
 	chroot $DIR apt -y install hive  > /dev/null 2>&1
 	echo_ok
 }
@@ -579,11 +588,11 @@ install_pkg() {
 install_kernel(){
     echo2 "Install linux kernel..."
     mkdir -p $DIR/kernel/
-    mkdir -p build/_kernel
+    mkdir -p build/_kernel/$kern_ver
     cp -r kernel/*.deb $DIR/kernel/
     for file in $DIR/kernel/*; do 
 	chroot $DIR dpkg -i /kernel/`basename $file` > /dev/null 2>&1
-	dpkg -x kernel/`basename $file` build/_kernel/ > /dev/null 2>&1
+	dpkg -x kernel/`basename $file` build/_kernel/$kern_ver/ > /dev/null 2>&1
     done
     echo_ok
 }
@@ -591,9 +600,9 @@ install_kernel(){
 extract_kernel(){
     echo2 "Extract linux kernel..."
     mkdir -p $DIR/kernel/
-    mkdir -p build/_kernel
+    mkdir -p build/_kernel/$kern_ver
     for file in kernel/*; do 
-	dpkg -x kernel/`basename $file` build/_kernel/ > /dev/null 2>&1
+	dpkg -x kernel/`basename $file` build/_kernel/$kern_ver/ > /dev/null 2>&1
     done
     echo_ok
 }
