@@ -436,8 +436,8 @@ create_initrd() {
     cp -r ${DIR}/boot/initrd-ram.img build/$dist/boot/initrd-ram.img
     cp -r ${DIR}/boot/vmlinuz-${kern_ver}  build/$dist/boot/vmlinuz
 
-    rm -rf $mydir/hiveramfs/boot/vmlinuz && ln -sf $mydir/build/$dist/boot/vmlinuz $mydir/hiveramfs/boot/vmlinuz
-    rm -rf $mydir/hiveramfs/boot/initrd-ram.img && ln -sf $mydir/build/$dist/boot/initrd-ram.img $mydir/hiveramfs/boot/initrd-ram.img
+    rm -rf $mydir/hiveramfs/boot/$dist && ln -sf $mydir/build/$dist/boot/vmlinuz $mydir/hiveramfs/boot/$dist
+    rm -rf $mydir/hiveramfs/boot/$dist.img && ln -sf $mydir/build/$dist/boot/initrd-ram.img $mydir/hiveramfs/boot/$dist.img
     echo_ok
 }
 
@@ -487,7 +487,7 @@ create_fs() {
     mkdir -p ${DIR}
 	if [[ ! -e ${DIR}/boot/debootstrap ]]; then
 	    echo2 "Create Root Filesystem..."
-	    debootstrap --arch=amd64 --include=$include $suite $DIR $repo > /dev/null
+	    debootstrap --arch=amd64 --include=$include $suite $DIR $repo > /dev/null 2>&1
 	    [[ $? -ne 0 ]] && echo_fail
 	    touch ${DIR}/boot/debootstrap
 	    echo_ok
@@ -583,6 +583,7 @@ install_pkg() {
 #	chroot $DIR locale-gen en_US en_US.UTF-8 > /dev/null 2>&1
 #	chroot $DIR update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 > /dev/null 2>&1
 	chroot $DIR apt -y install hive  > /dev/null 2>&1
+	chroot $DIR ln -sf /hive/etc/pci.ids /usr/share/misc/pci.ids
 	echo_ok
 }
 
@@ -621,17 +622,15 @@ clean_apt() {
 
 deploy_fs() {
 	local dir_size=`du -hsm $DIR | awk '{print $1}' | tr -d '\r\n'`
-	local filepath=build/$dist/hiveramfs.tar.xz
+	local filepath=build/$dist/$dist.tar.xz
 	echo2 "Create archive for ramfs. Directory size: ${dir_size}M"
 	echo ""    
 	echo2 "Saving to $filepath ..."
 	echo ""
-	tar -C $DIR --exclude='boot/*' --exclude='usr/src/*' --exclude='dev/*' -cpf - . | pv -s ${dir_size}M | pixz -9 -e > $filepath
+	tar -C $DIR --exclude='boot/*' --exclude='usr/src/*' --exclude='dev/*' -cpf - . | pv -s ${dir_size}M | pixz -e > $filepath
 	if [[ $? -eq 0 ]]; then
 	    echo2 "Create symlink ..."
-	    if [[ -e $mydir/hiveramfs/hiveramfs.tar.xz ]]; then 
-		 rm $mydir/hiveramfs/hiveramfs.tar.xz && ln -s $mydir/$filepath $mydir/hiveramfs/hiveramfs.tar.xz
-	    fi
+	    rm -rf hiveramfs/$dist.tar.xz && ln -s ../$filepath hiveramfs/$dist.tar.xz
 	    echo_ok
 	fi
 }

@@ -16,7 +16,7 @@ http_premount()
 {
 	if [ "${http_premount_used}" != "yes" ]; then
 		[ "$quiet" != "y" ] && log_begin_msg "Running /scripts/http-premount"
-		run_scripts /scripts/nhttp-premount
+		run_scripts /scripts/http-premount
 		[ "$quiet" != "y" ] && log_end_msg
 	fi
 	http_premount_used=yes
