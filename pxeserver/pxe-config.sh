@@ -186,7 +186,7 @@ echo "" >> $SERVER_CONF
 
 #Change Boot config
 sed -i "/kernel/c kernel http://${IP}/hiveramfs/boot/$DEFAULT_DIST" $BOOT_CONF
-sed -i "/append/c append initrd=http://${IP}/hiveramfs/boot/$DEFAULT_DIST.img ip=dhcp ethaddr=${net_default_mac} boot=http httproot=http://${IP}/hiveramfs/ ram_fs_size=${FS_SIZE}M hive_fs_arch=${DEAFULT_DIST}.tar.xz opencl_version=${OCL_VER} nvidia_version=${NV_VER} text consoleblank=0 intel_pstate=disable net.ifnames=0 ipv6.disable=1 pci=noaer iommu=soft amdgpu.vm_fragment_size=9 radeon.si_support=0 radeon.cik_support=0 amdgpu.si_support=1 amdgpu.cik_support=1 amdgpu.ppfeaturemask=0xffffffff" $BOOT_CONF 
+sed -i "/append/c append initrd=http://${IP}/hiveramfs/boot/$DEFAULT_DIST.img ip=dhcp ethaddr=${net_default_mac} boot=http httproot=http://${IP}/hiveramfs/ ram_fs_size=${FS_SIZE}M hive_fs_arch=${DEFAULT_DIST}.tar.xz opencl_version=${OCL_VER} nvidia_version=${NV_VER} text consoleblank=0 intel_pstate=disable net.ifnames=0 ipv6.disable=1 pci=noaer iommu=soft amdgpu.vm_fragment_size=9 radeon.si_support=0 radeon.cik_support=0 amdgpu.si_support=1 amdgpu.cik_support=1 amdgpu.ppfeaturemask=0xffffffff" $BOOT_CONF 
 
 echo "port=0" > $SYS_CONF"/etc/dnsmasq.conf"
 echo "" >> $SYS_CONF"/etc/dnsmasq.conf"
