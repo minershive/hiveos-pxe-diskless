@@ -48,9 +48,12 @@ dpkg -s atftpd  > /dev/null 2>&1
 #added for uefi boot
 dpkg -s grub-efi-amd64  > /dev/null 2>&1 
 [[ $? -ne 0 ]] && need_install="$need_install grub-efi-amd64"
-#adde pxz
+#added pixz
 dpkg -s pixz  > /dev/null 2>&1 
 [[ $? -ne 0 ]] && need_install="$need_install pixz"
+#added debootstrap
+dpkg -s debootstrap  > /dev/null 2>&1 
+[[ $? -ne 0 ]] && need_install="$need_install debootstrap"
 
 if [[ ! -z $need_install ]]; then
 	echo "Install needed package. Plese wait"
@@ -149,19 +152,19 @@ while true; do
 	echo "Invalid TMPFS size"
 done
 
-[[ -z $ARCH_NAME ]] && ARCH_NAME=hiveramfs.tar.xz
-echo -e "FS archive name: ${YELLOW}$ARCH_NAME${NOCOLOR}"
-echo "Press ENTER to continue with this FS archive name or type a new one"
+[[ -z $DEFAULT_DIST ]] && DEFAULT_DIST=ubuntu18
+echo -e "Default dist: ${YELLOW}${DEFAULT_DIST}${NOCOLOR}"
+#echo "Press ENTER to continue with this FS archive name or type a new one"
 
-while true; do
-	read archname
-	[[ -z $archname && ! -z $ARCH_NAME ]] && break
-	[[ $archname =~ \"|\'|[[:blank:]] ]] &&
-		ARCH_NAME=$archname &&
-		echo -e "New FS archive name: ${YELLOW}$ARCH_NAME${NOCOLOR}" &&
-		break
-	echo "Invalid FS archive name"
-done
+#while true; do
+#	read archname
+#	[[ -z $archname && ! -z $ARCH_NAME ]] && break
+#	[[ $archname =~ \"|\'|[[:blank:]] ]] &&
+#		ARCH_NAME=$archname &&
+#		echo -e "New FS archive name: ${YELLOW}$ARCH_NAME${NOCOLOR}" &&
+#		break
+#	echo "Invalid FS archive name"
+#done
 echo 
 
 [[ -z $ADDITIONAL_PACKAGES ]] && ADDITIONAL_PACKAGES=""
@@ -194,7 +197,7 @@ echo "IP="$IP >> $SERVER_CONF
 echo "" >> $SERVER_CONF
 echo "FS_SIZE="$FS_SIZE >> $SERVER_CONF
 echo "" >> $SERVER_CONF
-echo "ARCH_NAME="$ARCH_NAME >> $SERVER_CONF
+echo "DEFAULT_DIST="$DEFAULT_DIST >> $SERVER_CONF
 echo "" >> $SERVER_CONF
 echo "ADDITIONAL_PACKAGES=\""$ADDITIONAL_PACKAGES"\"" >> $SERVER_CONF
 echo "" >> $SERVER_CONF
@@ -202,8 +205,8 @@ echo "REMOVED_PACKPAGES=\""$REMOVED_PACKPAGES"\"" >> $SERVER_CONF
 echo "" >> $SERVER_CONF
 
 #Change Boot config
-sed -i "/kernel/c kernel http://${IP}/hiveramfs/boot/vmlinuz" $BOOT_CONF
-sed -i "/append/c append initrd=http://${IP}/hiveramfs/boot/initrd-ram.img ip=dhcp ethaddr=${net_default_mac} boot=http httproot=http://${IP}/hiveramfs/ ram_fs_size=${FS_SIZE}M hive_fs_arch=${ARCH_NAME} opencl_version=${OCL_VER} nvidia_version=${NV_VER} text consoleblank=0 intel_pstate=disable net.ifnames=0 ipv6.disable=1 pci=noaer iommu=soft amdgpu.vm_fragment_size=9 radeon.si_support=0 radeon.cik_support=0 amdgpu.si_support=1 amdgpu.cik_support=1 amdgpu.ppfeaturemask=0xffffffff" $BOOT_CONF 
+sed -i "/kernel/c kernel http://${IP}/hiveramfs/boot/$DEFAULT_DIST" $BOOT_CONF
+sed -i "/append/c append initrd=http://${IP}/hiveramfs/boot/$DEFAULT_DIST.img ip=dhcp ethaddr=${net_default_mac} boot=http httproot=http://${IP}/hiveramfs/ ram_fs_size=${FS_SIZE}M hive_fs_arch=${DEFAULT_DIST}.tar.xz opencl_version=${OCL_VER} nvidia_version=${NV_VER} text consoleblank=0 intel_pstate=disable net.ifnames=0 ipv6.disable=1 pci=noaer iommu=soft amdgpu.vm_fragment_size=9 radeon.si_support=0 radeon.cik_support=0 amdgpu.si_support=1 amdgpu.cik_support=1 amdgpu.ppfeaturemask=0xffffffff" $BOOT_CONF 
 
 echo "port=0" > $SYS_CONF"/etc/dnsmasq.conf"
 echo "" >> $SYS_CONF"/etc/dnsmasq.conf"
@@ -269,25 +272,25 @@ fi
 ##Create Netboot directory for x86_64-efi.
 grub-mknetdir --net-directory="$mydir"/tftp/ --subdir=/efi/ -d /usr/lib/grub/x86_64-efi/
 #making uefi
-grub-mkimage -d /usr/lib/grub/x86_64-efi/ -O x86_64-efi -o $mydir/tftp/efi/grubnetx64.efi --prefix="(tftp,$IP)/efi" efinet tftp efi_uga efi_gop http
+grub-mkimage -d /usr/lib/grub/x86_64-efi/ -O x86_64-efi -o $mydir/tftp/efi/grubnetx64.efi --prefix="(tftp,$IP)/efi" efinet tftp efi_uga efi_gop http configfile normal search
 chmod -R 777 $mydir/
 #make sed $mydir/tftp/efi/grub.cfg
 sed -i "/set net_default_server=/c set net_default_server=$IP" $mydir/tftp/efi/grub.cfg
 sed -i "/set fs_size=/c set fs_size=${FS_SIZE}M" $mydir/tftp/efi/grub.cfg
-sed -i "/set arch_name=/c set arch_name=$ARCH_NAME" $mydir/tftp/efi/grub.cfg
+sed -i "/set dist=/c set dist=$DEFAULT_DIST" $mydir/tftp/efi/grub.cfg
 sed -i "/set opencl_version=/c set opencl_version=$OCL_VER" $mydir/tftp/efi/grub.cfg
 sed -i "/set nvidia_version=/c set nvidia_version=$NV_VER" $mydir/tftp/efi/grub.cfg
 #finished making uefi
 echo
 [[ $res != 0 ]] && echo -e "${RED}Server install failed${NOCOLOR}" && exit 1
 echo -e "${GREEN}Server ready to work${NOCOLOR}"
-echo 
-upgrade="y"
-echo -n "Do you want to upgrade HiveOS [Y/n]?"
-read upg
+echo
+#upgrade="y"
+#echo -n "Do you want to upgrade HiveOS [Y/n]?"
+#read upg
 
-[[ ! -z $upg ]] && upgrade=$(echo ${upg,,} | cut -c 1)
+#[[ ! -z $upg ]] && upgrade=$(echo ${upg,,} | cut -c 1)
 
-[[ $upgrade == "y" ]] && exec $mydir/hive-upgrade.sh
+#[[ $upgrade == "y" ]] && exec $mydir/hive-upgrade.sh
 
 exit 0

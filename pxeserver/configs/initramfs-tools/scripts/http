@@ -16,7 +16,7 @@ http_premount()
 {
 	if [ "${http_premount_used}" != "yes" ]; then
 		[ "$quiet" != "y" ] && log_begin_msg "Running /scripts/http-premount"
-		run_scripts /scripts/nhttp-premount
+		run_scripts /scripts/http-premount
 		[ "$quiet" != "y" ] && log_end_msg
 	fi
 	http_premount_used=yes
@@ -73,24 +73,30 @@ http_mount_root()
 	fs_size=$(curl -sI ${httproot}${hive_fs_arch} 2>&1 | grep "Length" | awk '{print $2}')
 	curl -s ${httproot}${hive_fs_arch} | pv -s $fs_size | tar --lzma -xf -
 
-	echo "Download and extract firmwares"
-	fs_size=$(curl -sI ${httproot}/firmware.tar.xz 2>&1 | grep "Length" | awk '{print $2}')
-	curl -s ${httproot}/firmware.tar.xz | pv -s $fs_size | tar --lzma -xf -
+	list=$(/bin/lspci | grep -E "Class 0300:" | grep "Device 1002:" | wc -l)
+	if [[ $list -gt 0 ]]; then
+		echo "> Found $list AMD GPU's"
+		### Get Opencl files
+		echo "Download and extract OPENCL libs"
+		fs_size=$(curl -sI ${httproot}${opencl_version} 2>&1 | grep "Length" | awk '{print $2}')
+		curl -s ${httproot}${opencl_version} | pv -s $fs_size | tar --lzma -xf -
+		echo "Download and extract firmwares"
+		fs_size=$(curl -sI ${httproot}/firmware.tar.xz 2>&1 | grep "Length" | awk '{print $2}')
+		curl -s ${httproot}/firmware.tar.xz | pv -s $fs_size | tar --lzma -xf -
+	fi
+	#read -t 5 -p "Press any key to resume ..."
+	list=$(/bin/lspci | grep "Class 0300:" | grep "Device 10de:" |wc -l)
+	if [[ $list -gt 0 ]]; then
+		echo "> Found $list NVIDIA GPU's"
+		### Get NVIDIA files
+		echo "Download and extract NVIDIA libs and modules"
+		fs_size=$(curl -sI ${httproot}${nvidia_version} 2>&1 | grep "Length" | awk '{print $2}')
+		curl -s ${httproot}/nvidia/${nvidia_version} | pv -s $fs_size | tar --lzma -xf -
 
-	### Get Opencl files
-	echo "Download and extract OPENCL libs"
-	fs_size=$(curl -sI ${httproot}${opencl_version} 2>&1 | grep "Length" | awk '{print $2}')
-	curl -s ${httproot}${opencl_version} | pv -s $fs_size | tar --lzma -xf -
-
-	### Get NVIDIA files
-	echo "Download and extract NVIDIA libs and modules"
-	fs_size=$(curl -sI ${httproot}${nvidia_version} 2>&1 | grep "Length" | awk '{print $2}')
-	curl -s ${httproot}/nvidia/${nvidia_version} | pv -s $fs_size | tar --lzma -xf -
-
-	echo "Download and extract Xorg libs and modules"
-	fs_size=$(curl -sI ${httproot}/X.tar.xz 2>&1 | grep "Length" | awk '{print $2}')
-	curl -s ${httproot}/X.tar.xz | pv -s $fs_size | tar --lzma -xf -
-
+		echo "Download and extract Xorg libs and modules"
+		fs_size=$(curl -sI ${httproot}/X.tar.xz 2>&1 | grep "Length" | awk '{print $2}')
+		curl -s ${httproot}/X.tar.xz | pv -s $fs_size | tar --lzma -xf -
+	fi
 	
 	[[ $? == 0 ]] && log_end_msg
 	
