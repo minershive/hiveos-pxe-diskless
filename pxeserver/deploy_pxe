@@ -452,6 +452,11 @@ case $dist in
 	repo=http://archive.ubuntu.com/ubuntu/
 	shift
 	;;
+    ubuntu22)
+	suite=jammy
+	repo=http://archive.ubuntu.com/ubuntu/
+	shift
+	;;
     debian11)
 	suite=bullseye
 	repo=http://deb.debian.org/debian/
