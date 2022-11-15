@@ -1,5 +1,5 @@
 #### 2022-11-15 Version 6.5.3
-* Fixed Issue#19. Add gettext-base pkg to rootfs.
+* Fixed Issue#19. Add `gettext-base` pkg to rootfs.
 * Fixed Issue#20. Add default locale en_us.UTF-8
 * Add `pciutils` package
 * Add more customization.
