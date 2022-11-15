@@ -1,3 +1,17 @@
+#### 2022-11-15 Version 6.5.3
+* Fixed Issue#19. Add gettext-base pkg to rootfs.
+* Fixed Issue#20. Add default locale en_us.UTF-8
+* Add pciutils
+* Add more customization.
+* Add missind lspci hook
+* Add memtest entry for uefi grub
+    Rename some files:
+	if dist = ubuntu18
+	hiveramfs/hiveramfs.tar.xz    -> hiveramfs/ubuntu18.tar.xz
+	hiveramfs/boot/vmlinuz        -> hiveramfs/boot/ubuntu18
+	hiveramfs/boot/initrd-ram.img -> hiveramfs/boot/ubuntu18.img
+* Inital support Ubuntu 20.04  (ubuntu18|ubuntu20)
+
 #### 2022-09-22 Version 6.5.2
 * Fix grub-mkimage. Issue#18
 * Fix boot cmdline option ("boot=http" over "root=http") Issue#17
