@@ -152,7 +152,7 @@ while true; do
 	echo "Invalid TMPFS size"
 done
 
-[[ -z $DEFAULT_DIST ]] && DEFAULT_DIST=ubuntu18
+[[ -z $DEFAULT_DIST ]] && DEFAULT_DIST=ubuntu20
 echo -e "Default dist: ${YELLOW}${DEFAULT_DIST}${NOCOLOR}"
 #echo "Press ENTER to continue with this FS archive name or type a new one"
 

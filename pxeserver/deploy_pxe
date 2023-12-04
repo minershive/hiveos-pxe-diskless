@@ -50,12 +50,12 @@ function echo_fail() {
 
 function show_help() {
         echo "Usage:
-  deploy_pxe ubuntu18 --build           create latest Ubuntu 18.04 image
-  deploy_pxe ubuntu18 --upgrade         upgrade and repack rootfs imaage
-  deploy_pxe ubuntu18 --selfupgrade     just upgrade Hive package (need run upgrade after this)
-  deploy_pxe ubuntu18 --chroot          chroot into rootfs (for manual actions)
-  deploy_pxe ubuntu18 --initrd          rebuild initramfs image
-  deploy_pxe ubuntu18 --remove          delete rootfs folder
+  deploy_pxe ubuntu20 --build           create latest Ubuntu 20.04 image
+  deploy_pxe ubuntu20 --upgrade         upgrade and repack rootfs imaage
+  deploy_pxe ubuntu20 --selfupgrade     just upgrade Hive package (need run upgrade after this)
+  deploy_pxe ubuntu20 --chroot          chroot into rootfs (for manual actions)
+  deploy_pxe ubuntu20 --initrd          rebuild initramfs image
+  deploy_pxe ubuntu20 --remove          delete rootfs folder
 
 Nvidia drivers:
   deploy_pxe nvidia --list              list available driver versions
