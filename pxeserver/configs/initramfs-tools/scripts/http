@@ -73,37 +73,41 @@ http_mount_root()
 	fs_size=$(curl -sI ${httproot}${hive_fs_arch} 2>&1 | grep "Length" | awk '{print $2}')
 	curl -s ${httproot}${hive_fs_arch} | pv -s $fs_size | tar --lzma -xf -
 
-	list=$(/bin/lspci | grep -E "Class 0300:" | grep "Device 1002:" | wc -l)
-	if [[ $list -gt 0 ]]; then
-		echo "> Found $list AMD GPU's"
+	list_amd=$(/bin/lspci | grep -E "Class 0300:" | grep "Device 1002:" | wc -l)
+	if [[ $list_amd -gt 0 ]]; then
+		echo "> Found $list_amd AMD GPU's"
 		### Get Opencl files
 		echo "Download and extract OPENCL libs"
 		fs_size=$(curl -sI ${httproot}${opencl_version} 2>&1 | grep "Length" | awk '{print $2}')
 		curl -s ${httproot}${opencl_version} | pv -s $fs_size | tar --lzma -xf -
 		echo "Download and extract firmwares"
-		fs_size=$(curl -sI ${httproot}/firmware.tar.xz 2>&1 | grep "Length" | awk '{print $2}')
-		curl -s ${httproot}/firmware.tar.xz | pv -s $fs_size | tar --lzma -xf -
+		fs_size=$(curl -sI ${httproot}/amdgpu_fw.tar.xz 2>&1 | grep "Length" | awk '{print $2}')
+		curl -s ${httproot}/amdgpu_fw.tar.xz | pv -s $fs_size | tar --lzma -xf -
+		/bin/touch hive-config/.DISKLESS_AMD
 	fi
 	#read -t 5 -p "Press any key to resume ..."
-	list=$(/bin/lspci | grep "Class 0300:" | grep "Device 10de:" |wc -l)
-	if [[ $list -gt 0 ]]; then
-		echo "> Found $list NVIDIA GPU's"
+	
+	list_nv=$(/bin/lspci | grep -E "Class 030" | grep "Device 10de:" | wc -l)
+	if [[ $list_nv -gt 0 ]]; then
+		echo "> Found $list_nv NVIDIA GPU's"
 		### Get NVIDIA files
 		echo "Download and extract NVIDIA libs and modules"
-		fs_size=$(curl -sI ${httproot}${nvidia_version} 2>&1 | grep "Length" | awk '{print $2}')
+		fs_size=$(curl -sI ${httproot}/nvidia/${nvidia_version} 2>&1 | grep "Length" | awk '{print $2}')
 		curl -s ${httproot}/nvidia/${nvidia_version} | pv -s $fs_size | tar --lzma -xf -
 
 		echo "Download and extract Xorg libs and modules"
 		fs_size=$(curl -sI ${httproot}/X.tar.xz 2>&1 | grep "Length" | awk '{print $2}')
 		curl -s ${httproot}/X.tar.xz | pv -s $fs_size | tar --lzma -xf -
+		/bin/touch hive-config/.DISKLESS_NVIDIA
 	fi
-	
+	#read -t 5 -p "Press any key to resume ..."
+
 	[[ $? == 0 ]] && log_end_msg
 	
 	#Probe custom config
 	/bin/wget2 -q --spider ${httproot}${ethaddr}/hive-config/
 	if [[ $? == 0 ]]; then
-		echo "Found custom config for $ethaddr..."
+		echo "> Found custom config for $ethaddr..."
 		httproot=${httproot}${ethaddr}/
 	fi
 	/bin/wget2 -q --spider ${httproot}hive-config/
@@ -112,6 +116,7 @@ http_mount_root()
 		NDIR=$((`echo "${httproot}hive-config/"|sed 's|[^/]||g;s|/$||'|wc -c` - 3))
 		/bin/wget2 -q -nH --no-parent -r --cut-dirs=$NDIR "${httproot}hive-config/"
 		/bin/find -type f -name "index*" -exec rm -f {} \;
+		/bin/touch .DISKLESS
 		echo "Create FS in RAM successfull"
 	else
 		echo "Error. Config not found!"
