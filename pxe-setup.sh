@@ -22,6 +22,7 @@ NOCOLOR='\033[0m'
 
 dir=$1
 [[ $dir == "/" ]] && dir=""
+kernel_url="https://download.hiveos.farm/diskless/kernel"
 echo
 echo -e "Destination directory: ${YELLOW}${dir}/pxeserver${NOCOLOR}"
 echo "Press ENTER to continue with this destination or type a new one"
@@ -62,9 +63,7 @@ fi
 [[ -f ${dir}/pxeserver/server.conf ]] && cp ${dir}/pxeserver/server.conf /tmp/pxe-server/hiveos-pxe-diskless-master/pxeserver
 [[ -d ${dir}/pxeserver/hiveramfs/hive-config ]] && cp -R ${dir}/pxeserver/hiveramfs/hive-config/* /tmp/pxe-server/hiveos-pxe-diskless-master/pxeserver/hiveramfs/hive-config/
 
-[[ -d ${dir}/pxeserver ]] && rm -R ${dir}/pxeserver
-mkdir -p ${dir}/pxeserver
-
+[[ ! -d ${dir}/pxeserver ]] && mkdir -p ${dir}/pxeserver
 
 echo
 echo -e "${GREEN}> Copy PXE-server package to destination directory.${NOCOLOR}"
@@ -73,4 +72,25 @@ cp -R /tmp/pxe-server/hiveos-pxe-diskless-master/pxeserver/* ${dir}/pxeserver/
 rm -R /tmp/pxe-server > /dev/null 2>&1
 
 cd ${dir}/pxeserver
-exec sudo ./pxe-config.sh
+[[ -d ${dir}/pxeserver/kernel ]] && rm -R ${dir}/pxeserver/kernel
+#mkdir -p ${dir}/pxeserver/kernel
+echo
+echo -e "${GREEN}> Download PXE-kernel package${NOCOLOR}"
+echo
+wget -nH --no-parent -r --cut-dir=1 $kernel_url
+if [[ $? -ne 0 ]]; then
+	echo -e "${RED}> Error download PXE-kernel package. Exit${NOCOLOR}"
+	exit 1
+fi
+[[ -f robots.txt ]] && rm -R robots.txt
+
+config="y"
+echo
+echo -n "Do you want to config Hiveos PXE server package [Y/n]? "
+read val
+[[ ! -z $val ]] && config=$(echo ${val,,} | cut -c 1)
+if [[ $config == "y" ]]; then
+    exec sudo ./pxe-config.sh
+else
+    echo "> Setup complite. Run pxe-config.sh manualy"
+fi
