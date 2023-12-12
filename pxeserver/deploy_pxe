@@ -29,14 +29,19 @@ mydir=`pwd`
 dist=$1
 command=$2
 
+LOG_FILE=`basename $0`.log
 DIR=`pwd`/build/$dist/_fs
+DIST_DIR=`pwd`/build/
+
 kern_ver=`dpkg -I kernel/linux-image-*.deb | grep Package: |sed -r 's/.*linux-image-//'`
 hiverepo=http://download.hiveos.farm/repo/binary
 include="sudo,curl,wget,systemd,initramfs-tools,net-tools,pv,tar,xz-utils"
 
+
 function echo2() {
 	name=`basename $0`
-	echo -ne ${BCYAN}[${name^^}]${NOCOLOR} ${YELLOW}$1${NOCOLOR}
+	pad=`echo -n "$1" | sed -e :a -e 's/^.\{1,45\}$/&./;ta'`
+	echo -ne ${BCYAN}[$(date +'%d/%m/%Y %H:%M:%S')][${name^^}]${NOCOLOR} ${YELLOW}$pad${NOCOLOR}
 }
 
 function echo_ok() {
@@ -52,28 +57,27 @@ function show_help() {
         echo "Usage:
   deploy_pxe ubuntu20 --build           create latest Ubuntu 20.04 image
   deploy_pxe ubuntu20 --upgrade         upgrade and repack rootfs imaage
-  deploy_pxe ubuntu20 --selfupgrade     just upgrade Hive package (need run upgrade after this)
+  deploy_pxe ubuntu20 --selfupgrade     (NOT USED YET) just upgrade Hive package (need run upgrade after this)
   deploy_pxe ubuntu20 --chroot          chroot into rootfs (for manual actions)
   deploy_pxe ubuntu20 --initrd          rebuild initramfs image
   deploy_pxe ubuntu20 --remove          delete rootfs folder
 
 Nvidia drivers:
   deploy_pxe nvidia --list              list available driver versions
-  deploy_pxe nvidia --build <VER>       build driver specific version ( e.g. 495 or 510 or 510.39.01)
+  deploy_pxe nvidia --build <VER>       build driver specific version ( e.g. 515 or 515.105 or 515.105.01)
 "
 }
 
 
 ##NVIDIA PART
 CUDA_VER=(
-    11.6 510.39.01
-    11.5 495.29.05
-    11.4 470.42.01
-    11.3 465.19.01
-    11.2 460.27.04
-    11.1 455.23.04
-    11.0 450.51.05
+        12.2 535.54.03
+        12.0 525.60.13
+        11.8 520.56.06
+        11.7 515.43.04
+        11.6 510.39.01
 )
+
 function get_cuda_version() { # @driver_version, returns cuda_version
     local ver="$1"
     readarray -t ver_arr < <(echo -e "${ver//./$'\n'}\n0\n0")
@@ -140,7 +144,7 @@ function list_packages() {
                         last=
                 fi
                     this="${drv%%.*}"
-	    if [[ "$this" > "440" ]]; then
+	    if [[ "$this" > "500" ]]; then
                 if [[ "$last" != "$this" || -z "$last" ]]; then
                     [[ ! -z "$last" ]] && echo -e ""
         	        last="$this"
@@ -287,7 +291,7 @@ function get_package() { # @url or @file, returns $package
 versions=()
 function get_versions() { # returns $versions
     [[ ${#versions[@]} -gt 0 ]] && return 0
-    echo2 "Loading drivers list - ${NOCOLOR}"
+    echo2 "Loading drivers list${NOCOLOR}"
     local list=
     if [[ "$DRVURL" == "$DRVNVIDIAURL" ]]; then
         list=`curl -sLk --connect-timeout $TIMEOUT --retry $RETRY $DRVNVIDIAURL` &&
@@ -345,19 +349,19 @@ function build_driver() { # @url or @file, @force_install
 
     #Extract Driver
     echo2 "Extract $basename..."
-    [[  -d ${DRVPATH}${basename%.*} ]] && rm -rf ${DRVPATH}${basename%.*}
-    cd ${DRVPATH} && sh $basename --extract-only > /dev/null 2>&1
-    [[ $? -ne 0 ]] && echo -ne "${RED}> Filed to extract driver.${NOCOLOR}" && echo_fail
+    [[  -d ${DRVPATH}${ver} ]] && rm -rf ${DRVPATH}${ver}
+    cd ${DRVPATH} && sh $basename --extract-only --target $ver > /dev/null 2>&1
+    [[ $? -ne 0 ]] && echo $? && echo -ne "${RED}> Failed to extract driver $basename${NOCOLOR}" && echo_fail
     echo_ok
 
     #Build from source
-    echo2 "Build NVIDIA-$ver driver (`nproc` CPU cores)..."
-    mkdir -p $mydir/$build_dir/lib/modules/$kern_ver/kernel/drivers/video
-    cd ${basename%.*}/kernel/ && make -j `nproc` SYSSRC=$mydir/build/_kernel/$kern_ver/usr/src/linux-headers-$kern_ver/ M=$PWD IGNORE_CC_MISMATCH='1' > $mydir/${DRVPATH}make-$ver.log 2>&1
+    echo2 "Build NVIDIA-$ver (`nproc` CPU cores)..."
+    mkdir -p $mydir/$build_dir/usr/lib/modules/$kern_ver/kernel/drivers/video
+    cd ${ver}/kernel/ && make -j `nproc` SYSSRC=$mydir/build/_kernel/$kern_ver/usr/src/linux-headers-$kern_ver/ M=$PWD IGNORE_CC_MISMATCH='1' > $mydir/${DRVPATH}make-$ver.log 2>&1
     [[ $? -ne 0 ]] && echo -e "${RED}> Filed to build driver.${NOCOLOR}" && echo_fail
     echo_ok
     echo2 "Copy driver files..."
-    find . -type f -name "*.ko" -exec cp -r "{}" $mydir/$build_dir/lib/modules/$kern_ver/kernel/drivers/video \;
+    find . -type f -name "*.ko" -exec cp -r "{}" $mydir/$build_dir/usr/lib/modules/$kern_ver/kernel/drivers/video \;
     [[ $? -ne 0 ]] && echo -e "${RED}> Filed to copy driver files.${NOCOLOR}" && echo_fail
     echo_ok
     #Copy libs 
@@ -367,36 +371,37 @@ function build_driver() { # @url or @file, @force_install
     mkdir -p $mydir/$build_dir/usr/local/lib/xorg/modules/drivers
     mkdir -p $mydir/$build_dir/usr/local/bin
     mkdir -p $mydir/$build_dir/etc/{ld.so.conf.d,modprobe.d}
-    mkdir -p $mydir/$build_dir/lib/firmware/nvidia/$ver
+    mkdir -p $mydir/$build_dir/usr/lib/firmware/nvidia/$ver
     mkdir -p $mydir/$build_dir/etc/OpenCL/vendors
 
     cd $mydir/$build_dir/usr/local/lib/nvidia
-    for file in libcuda.so libnvidia-opencl.so libnvidia-ml.so libnvidia-allocator.so libnvidia-cfg.so libnvidia-fbc.so libnvidia-gtk2.so libnvidia-gtk3.so ; do
-	cp -r $mydir/${DRVPATH}${basename%.*}/$file.$ver .
+    for file in libcuda.so libnvidia-opencl.so libnvidia-ml.so libnvidia-allocator.so libnvidia-cfg.so libnvidia-fbc.so libnvidia-gtk2.so libnvidia-gtk3.so libnvidia-ptxjitcompiler.so libnvidia-nvvm.so ; do
+	cp -r $mydir/${DRVPATH}${ver}/$file.$ver .
 	ln -s $file.$ver $file
 	ln -s $file.$ver $file.1
 	[[ $? -ne 0 ]] && echo -e "${RED}> Filed to copy lib files.${NOCOLOR}" && echo_fail
     done
 
     for file in nvidia-persistenced nvidia-settings nvidia-smi ; do
-	cp -r $mydir/${DRVPATH}${basename%.*}/$file $mydir/$build_dir/usr/local/bin
+	cp -r $mydir/${DRVPATH}${ver}/$file $mydir/$build_dir/usr/local/bin
     done
     echo "options nvidia_drm modeset=1" > $mydir/$build_dir/etc/modprobe.d/nvidia.conf
     echo "/usr/local/lib/nvidia" > $mydir/$build_dir/etc/ld.so.conf.d/nvidia.conf
-    cp -r $mydir/${DRVPATH}${basename%.*}/nvidia.icd $mydir/$build_dir/etc/OpenCL/vendors
-    cp -r $mydir/${DRVPATH}${basename%.*}/firmware/gsp.bin $mydir/$build_dir/lib/firmware/nvidia/$ver
-    cp -r $mydir/${DRVPATH}${basename%.*}/nvidia_drv.so $mydir/$build_dir/usr/local/lib/xorg/modules/drivers 
+    cp -r $mydir/${DRVPATH}${ver}/nvidia.icd $mydir/$build_dir/etc/OpenCL/vendors
+    cp -r $mydir/${DRVPATH}${ver}/firmware/*.bin $mydir/$build_dir/usr/lib/firmware/nvidia/$ver
+    cp -r $mydir/${DRVPATH}${ver}/nvidia_drv.so $mydir/$build_dir/usr/local/lib/xorg/modules/drivers 
     echo_ok
     cd $mydir
     
     #Create archive 
     echo2 "Create archive..."
     tar -C $mydir/$build_dir -cpf - . | pixz -9 -e > $mydir/$build_dir.tar.xz
-    [[ $? -ne 0 ]] && echo_fail
-    echo_ok
+    [[ $? -ne 0 ]] && echo_fail || echo_ok
+
     #Clear folders
     rm -rf $mydir/$build_dir
-    rm -rf $mydir/${DRVPATH}${basename%.*}
+    rm -rf $mydir/${DRVPATH}$basename
+    rm -rf $mydir/${DRVPATH}$ver
     ln -sf $mydir/$build_dir.tar.xz hiveramfs/nvidia/
     echo2 "${GREEN}Driver build successful${NOCOLOR}"
     echo ""
@@ -445,21 +450,27 @@ case $dist in
     ubuntu18)
 	suite=bionic
 	repo=http://archive.ubuntu.com/ubuntu/
-	shift
+	echo -e "${RED} Ubuntu 18.04 ($suite) image is deprecated.${NOCOLOR}"
+	show_help
+	exit 1
 	;;
     ubuntu20)
 	suite=focal
-	repo=http://archive.ubuntu.com/ubuntu/
+	#repo=http://archive.ubuntu.com/ubuntu/
+	repo="mirror://mirrors.ubuntu.com/mirrors.txt"
+	LOG_FILE="build-${suite}.log"
 	shift
 	;;
     ubuntu22)
 	suite=jammy
-	repo=http://archive.ubuntu.com/ubuntu/
+	repo="mirror://mirrors.ubuntu.com/mirrors.txt"
+	LOG_FILE="build-${suite}.log"
 	shift
 	;;
-    debian11)
-	suite=bullseye
+    debian12)
+	suite=bookworm
 	repo=http://deb.debian.org/debian/
+	LOG_FILE="build-${suite}.log"
 	shift
 	;;
     nvidia)
@@ -473,6 +484,7 @@ case $dist in
 	DRVPATTERN="NVIDIA-Linux-x86_64-"
 	DRVREGEXP="${DRVPATTERN}\K[0-9\.]+(?=\.run)"
 	DRVNVIDIAURL="https://download.nvidia.com/XFree86/Linux-x86_64/"
+	LOG_FILE="nvidia.log"
 	shift
 	;;
     *)
@@ -492,12 +504,38 @@ create_fs() {
     mkdir -p ${DIR}
 	if [[ ! -e ${DIR}/boot/debootstrap ]]; then
 	    echo2 "Create Root Filesystem..."
-	    debootstrap --arch=amd64 --include=$include $suite $DIR $repo > /dev/null 2>&1
+	    cc=`whois $(curl -s ifconfig.me) | grep -iE ^country: | awk '{print tolower($2)}'|tr -d '\n'`
+	    [[ ! -z $cc ]] && url="http://$cc.archive.ubuntu.com/ubuntu/" || url="http://archive.ubuntu.com/ubuntu/"
+	    debootstrap --arch=amd64 --include=$include $suite $DIR $url &>$LOG_FILE
 	    [[ $? -ne 0 ]] && echo_fail
 	    touch ${DIR}/boot/debootstrap
 	    echo_ok
+	else
+		echo "" 
+		echo -e "${RED}RootFS on $dist already exist.
+		${YELLOW}Try to use 
+		    ${CYAN}$(basename $0) ${CYAN}$dist --upgrade ${YELLOW}to upgrade exist rootfs
+		or
+		    ${CYAN}$(basename $0) $dist --remove ${YELLOW}to remove them.
+		And then re-launch 
+		    ${CYAN}$(basename $0) $dist --build${NOCOLOR}"
+		echo ""
+		exit 1
 	fi
-    
+}
+
+remove_fs() {
+	
+	local remove=n
+	if [[ -d $DIST_DIR ]]; then
+		echo -n "Do you want to remove $dist [Y/n]? "
+		read rem
+		[[ ! -z $rem ]] && remove=$(echo ${rem,,} | cut -c 1)
+		[[ $remove == "y" ]] && rm -rf $DIST_DIR/$dist
+	fi
+}
+
+configure_fs() {
     echo2 "Configure FS..."
     chroot $DIR mkdir -p /hive-config
     rm ${DIR}/etc/systemd/system/getty.target.wants/getty@tty1.service
@@ -506,9 +544,10 @@ create_fs() {
     echo root:hunter2 | sudo chpasswd -c SHA256 -R $DIR
     echo user:1 | sudo chpasswd -c SHA256 -R $DIR
 
-    chroot $DIR adduser user sudo
-    chroot $DIR systemctl enable systemd-networkd > /dev/null 2>&1
-    chroot $DIR systemctl enable systemd-resolved > /dev/null 2>&1
+    chroot $DIR adduser user sudo &>>$LOG_FILE
+    
+    chroot $DIR systemctl enable systemd-networkd &>>$LOG_FILE
+    chroot $DIR systemctl enable systemd-resolved &>>$LOG_FILE
     echo "nameserver 127.0.0.53" > $DIR/etc/resolv.conf
     #Need for loadable custom modules
     echo "/sbin/depmod" >>  $DIR/lib/lsb/init-functions 
@@ -533,7 +572,7 @@ EOT
 cp -r configs/hive.gpg $DIR/etc/apt/trusted.gpg.d/hiverepo.gpg
 echo "deb $hiverepo /" > $DIR/etc/apt/sources.list.d/hiverepo.list
 
-if [[ $dist == "ubuntu18" || $dist == "ubuntu20" ]]; then
+if [[ $dist == "ubuntu20" || $dist == "ubuntu22" ]]; then
 
 tee $DIR/etc/apt/sources.list > /dev/null <<EOT
 deb $repo $suite main restricted
@@ -563,32 +602,37 @@ fi
 
 upgrade_fs() {
     echo2 "Upgrade FS..."
-    chroot $DIR locale-gen en_US.UTF-8 > /dev/null 2>&1
-    chroot $DIR update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 > /dev/null 2>&1
-    if [[ $? -ne 0 ]]; then
-	echo_fail
-    fi
-    chroot $DIR apt -y update > /dev/null 2>&1
-    if [[ $? -ne 0 ]]; then 
-	echo_fail
-    fi
-    chroot $DIR apt -y upgrade > /dev/null 2>&1
-    if [[ $? -ne 0 ]]; then
-	echo_fail
-    fi
-    echo_ok
+
+    chroot $DIR apt -y update &>>$LOG_FILE
+    [[ $? -ne 0 ]] && echo_fail 
+    chroot $DIR apt -y upgrade &>>$LOG_FILE
+    [[ $? -ne 0 ]] && echo_fail || echo_ok
+
     echo2 "Install additional packages..."
     chroot $DIR apt -y install mc busybox-static libnuma1 psmisc x11-xkb-utils gettext-base \
-				pciutils > /dev/null 2>&1
+				pciutils dmidecode locales-all &>>$LOG_FILE
+    [[ $? -ne 0 ]] && echo_fail || echo_ok
+    echo2 "Compile locales..."
+    chroot $DIR apt -y install locales &>>$LOG_FILE
+    chroot $DIR locale-gen en_US.UTF-8 &>>$LOG_FILE
+    chroot $DIR update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 &>>$LOG_FILE
+    [[ $? -ne 0 ]] && echo_fail || echo_ok
+
+    echo2 "Install rtl_nic firmwares ..."
+    mkdir -p $DIR/lib/firmware/updates/rtl_nic/
+    curl -s  https://kernel.googlesource.com/pub/scm/linux/kernel/git/firmware/linux-firmware.git/+archive/refs/heads/main/rtl_nic.tar.gz | tar xfz - -C $DIR/lib/firmware/updates/rtl_nic/
     echo_ok
+
 }
 
 install_pkg() {
 	echo2 "Install Hiveon package..."
 #	chroot $DIR locale-gen en_US en_US.UTF-8 > /dev/null 2>&1
 #	chroot $DIR update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 > /dev/null 2>&1
-	chroot $DIR apt -y install hive  > /dev/null 2>&1
+	chroot $DIR apt -y install hive  &>>$LOG_FILE
 	chroot $DIR ln -sf /hive/etc/pci.ids /usr/share/misc/pci.ids
+	chroot $DIR /hive/bin/repover-touch
+	#chroot $DIR apt -y install hive-amdgpu-5.4 hive-rocm-5.4 &>>$LOG_FILE
 	echo_ok
 }
 
@@ -598,8 +642,8 @@ install_kernel(){
     mkdir -p build/_kernel/$kern_ver
     cp -r kernel/*.deb $DIR/kernel/
     for file in $DIR/kernel/*; do 
-	chroot $DIR dpkg -i /kernel/`basename $file` > /dev/null 2>&1
-	dpkg -x kernel/`basename $file` build/_kernel/$kern_ver/ > /dev/null 2>&1
+	chroot $DIR dpkg -i /kernel/`basename $file` &>>$LOG_FILE
+	dpkg -x kernel/`basename $file` build/_kernel/$kern_ver/ &>>$LOG_FILE
     done
     echo_ok
 }
@@ -609,7 +653,7 @@ extract_kernel(){
     mkdir -p $DIR/kernel/
     mkdir -p build/_kernel/$kern_ver
     for file in kernel/*; do 
-	dpkg -x kernel/`basename $file` build/_kernel/$kern_ver/ > /dev/null 2>&1
+	dpkg -x kernel/`basename $file` build/_kernel/$kern_ver/ &>>$LOG_FILE
     done
     echo_ok
 }
@@ -628,19 +672,18 @@ clean_apt() {
 deploy_fs() {
 	local dir_size=`du -hsm $DIR | awk '{print $1}' | tr -d '\r\n'`
 	local filepath=build/$dist/$dist.tar.xz
-	echo2 "Create archive for ramfs. Directory size: ${dir_size}M"
-	echo ""    
+	echo2 "Directory size: ${dir_size}M" && echo_ok
+
 	echo2 "Saving to $filepath ..."
-	echo ""
-	tar -C $DIR --exclude='boot/*' --exclude='usr/src/*' --exclude='dev/*' -cpf - . | pv -s ${dir_size}M | pixz -e > $filepath
-	if [[ $? -eq 0 ]]; then
+	tar -C $DIR --exclude='boot/*' --exclude='usr/src/*' --exclude='dev/*' -cpf - . | pixz -9 -e > $filepath
+	[[ $? -ne 0 ]] && echo_fail || echo_ok
 	    echo2 "Create symlink ..."
 	    rm -rf hiveramfs/$dist.tar.xz && ln -s ../$filepath hiveramfs/$dist.tar.xz
-	    echo_ok
-	fi
+	[[ $? -ne 0 ]] && echo_fail || echo_ok
+	
 }
 
-echo2 "${GREEN}Prepare...${NOCOLOR}"
+echo ""
 echo ""
 
 
@@ -699,12 +742,16 @@ case $1 in
 	mount_need
 	add_apt
 	upgrade_fs
+	configure_fs
 	install_pkg
 	install_kernel
 	create_initrd
 	clean_apt
 	umount_need
 	deploy_fs
+	;;
+    --remove)
+	remove_fs
 	;;
     *)
 	show_help
