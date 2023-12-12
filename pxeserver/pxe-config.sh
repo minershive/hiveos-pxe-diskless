@@ -57,13 +57,14 @@ dpkg -s debootstrap  > /dev/null 2>&1
 #added zstd for nvidia 525+ driver compile
 dpkg -s zstd  > /dev/null 2>&1 
 [[ $? -ne 0 ]] && need_install="$need_install zstd"
-
 #added whois  (not installed by default in 20.04 server).
 dpkg -s whois  > /dev/null 2>&1 
 [[ $? -ne 0 ]] && need_install="$need_install whois"
+#build-essential
+need_install="$need_install build-essential"
 
 if [[ ! -z $need_install ]]; then
-	echo "Install $need_instal packages."
+	echo "Install $need_install packages."
 	echo "Please wait..."
 	apt update > /dev/null 2>&1
 	apt install -y $need_install > /dev/null 2>&1
