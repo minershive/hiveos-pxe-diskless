@@ -440,7 +440,7 @@ create_initrd() {
     mkdir -p build/$dist/boot
     cp -r ${DIR}/boot/initrd-ram.img build/$dist/boot/initrd-ram.img
     cp -r ${DIR}/boot/vmlinuz-${kern_ver}  build/$dist/boot/vmlinuz
-
+    [[ ! -d $mydir/hiveramfs/boot ]] && mkdir -p $mydir/hiveramfs/boot
     rm -rf $mydir/hiveramfs/boot/$dist && ln -sf $mydir/build/$dist/boot/vmlinuz $mydir/hiveramfs/boot/$dist
     rm -rf $mydir/hiveramfs/boot/$dist.img && ln -sf $mydir/build/$dist/boot/initrd-ram.img $mydir/hiveramfs/boot/$dist.img
     echo_ok
