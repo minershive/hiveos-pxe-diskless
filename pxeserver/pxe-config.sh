@@ -68,6 +68,7 @@ if [[ ! -z $need_install ]]; then
 	echo "Please wait..."
 	apt update > /dev/null 2>&1
 	apt install -y $need_install > /dev/null 2>&1
+	update-inetd --disable tftp > /dev/null 2>&1
 	echo "Done"
 	echo
 fi
@@ -147,8 +148,8 @@ while true; do
 done
 
 
-[[ -z $FS_SIZE ]] && FS_SIZE=2500
-echo -e "TMPFS size: ${YELLOW}$FS_SIZE Mb${NOCOLOR}"
+[[ -z $FS_SIZE ]] && FS_SIZE=3000
+echo -e "TMPFS size: ${YELLOW}$FS_SIZE MB${NOCOLOR}"
 echo "Press ENTER to continue with this TMPFS size or type a new one (in MB)"
 
 while true; do
@@ -156,7 +157,7 @@ while true; do
 	[[ -z $size && ! -z $FS_SIZE ]] && break
 	[[ $size =~ ^[0-9]+$ ]] &&
 		FS_SIZE=$size &&
-		echo -e "New TMPFS size: ${YELLOW}$FS_SIZE Mb${NOCOLOR}" &&
+		echo -e "New TMPFS size: ${YELLOW}$FS_SIZE MB${NOCOLOR}" &&
 		break
 	echo "Invalid TMPFS size"
 done
