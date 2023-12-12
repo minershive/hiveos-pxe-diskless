@@ -263,7 +263,7 @@ fi
 ##Create Netboot directory for x86_64-efi.
 grub-mknetdir --net-directory="$mydir"/tftp/ --subdir=/efi/ -d /usr/lib/grub/x86_64-efi/
 #making uefi
-#grub-mkimage -d /usr/lib/grub/x86_64-efi/ -O x86_64-efi -o $mydir/tftp/efi/grubnetx64.efi --prefix="(tftp,$IP)/efi" efinet tftp efi_uga efi_gop http configfile normal search
+grub-mkimage -d /usr/lib/grub/x86_64-efi/ -O x86_64-efi -o $mydir/tftp/efi/grubnetx64.efi --prefix="(tftp,$IP)/efi" efinet tftp efi_uga efi_gop http configfile normal search
 chmod -R 777 $mydir/
 #make sed $mydir/tftp/efi/grub.cfg
 #sed -i "/set net_default_server=/c set net_default_server=$IP" $mydir/tftp/efi/grub.cfg
