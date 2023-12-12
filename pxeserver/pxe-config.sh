@@ -29,8 +29,8 @@ TFTP_ROOT=$mydir"/tftp"
 BOOT_CONF=$TFTP_ROOT"/bios/menu.cfg"
 HTTP_ROOT="$mydir/hiveramfs"
 SYS_CONF=$mydir"/configs"
-OCL_VER=opencl-21.40.1.tar.xz 
-NV_VER=nvidia-470.86.tar.xz
+OCL_VER=5.4
+NV_VER=535.129.03
 
 #install package
 need_install=
@@ -54,6 +54,9 @@ dpkg -s pixz  > /dev/null 2>&1
 #added debootstrap
 dpkg -s debootstrap  > /dev/null 2>&1 
 [[ $? -ne 0 ]] && need_install="$need_install debootstrap"
+#added zstd for nvidia 525+ driver compile
+dpkg -s zstd  > /dev/null 2>&1 
+[[ $? -ne 0 ]] && need_install="$need_install zstd"
 
 if [[ ! -z $need_install ]]; then
 	echo "Install needed package. Plese wait"
@@ -182,6 +185,8 @@ echo "" >> $SERVER_CONF
 echo "FS_SIZE="$FS_SIZE >> $SERVER_CONF
 echo "" >> $SERVER_CONF
 echo "DEFAULT_DIST="$DEFAULT_DIST >> $SERVER_CONF
+echo "OCL_VER="$OCL_VER >> $SERVER_CONF
+echo "NV_VER="$NV_VER >> $SERVER_CONF
 echo "" >> $SERVER_CONF
 
 #Change Boot config
@@ -252,14 +257,21 @@ fi
 ##Create Netboot directory for x86_64-efi.
 grub-mknetdir --net-directory="$mydir"/tftp/ --subdir=/efi/ -d /usr/lib/grub/x86_64-efi/
 #making uefi
-grub-mkimage -d /usr/lib/grub/x86_64-efi/ -O x86_64-efi -o $mydir/tftp/efi/grubnetx64.efi --prefix="(tftp,$IP)/efi" efinet tftp efi_uga efi_gop http configfile normal search
+#grub-mkimage -d /usr/lib/grub/x86_64-efi/ -O x86_64-efi -o $mydir/tftp/efi/grubnetx64.efi --prefix="(tftp,$IP)/efi" efinet tftp efi_uga efi_gop http configfile normal search
 chmod -R 777 $mydir/
 #make sed $mydir/tftp/efi/grub.cfg
-sed -i "/set net_default_server=/c set net_default_server=$IP" $mydir/tftp/efi/grub.cfg
-sed -i "/set fs_size=/c set fs_size=${FS_SIZE}M" $mydir/tftp/efi/grub.cfg
-sed -i "/set dist=/c set dist=$DEFAULT_DIST" $mydir/tftp/efi/grub.cfg
-sed -i "/set opencl_version=/c set opencl_version=$OCL_VER" $mydir/tftp/efi/grub.cfg
-sed -i "/set nvidia_version=/c set nvidia_version=$NV_VER" $mydir/tftp/efi/grub.cfg
+#sed -i "/set net_default_server=/c set net_default_server=$IP" $mydir/tftp/efi/grub.cfg
+#sed -i "/set fs_size=/c set fs_size=${FS_SIZE}M" $mydir/tftp/efi/grub.cfg
+#sed -i "/set dist=/c set dist=$DEFAULT_DIST" $mydir/tftp/efi/grub.cfg
+#sed -i "/set opencl_version=/c set opencl_version=$OCL_VER" $mydir/tftp/efi/grub.cfg
+#sed -i "/set nvidia_version=/c set nvidia_version=$NV_VER" $mydir/tftp/efi/grub.cfg
+
+echo "" > $mydir/tftp/efi/default.cfg
+echo "set net_default_server=$IP" >> $mydir/tftp/efi/default.cfg
+echo "set fs_size=${FS_SIZE}M" >> $mydir/tftp/efi/default.cfg
+echo "set dist=$DEFAULT_DIST" >> $mydir/tftp/efi/default.cfg
+echo "set opencl_version=$OCL_VER" >> $mydir/tftp/efi/default.cfg
+echo "set nvidia_version=$NV_VER" >> $mydir/tftp/efi/default.cfg
 #finished making uefi
 echo
 [[ $res != 0 ]] && echo -e "${RED}Server install failed${NOCOLOR}" && exit 1
