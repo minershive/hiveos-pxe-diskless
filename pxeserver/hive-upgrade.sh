@@ -62,8 +62,14 @@ cur_ver=
 [[ -f $mydir"/VER" ]] && cur_ver=`cat $mydir"/VER"`
 
 new_ver=`curl -j -f -s https://raw.githubusercontent.com/minershive/hiveos-pxe-diskless/master/pxeserver/VER`
-if [[ $? -ne 0 || -z $new_ver || -z $cur_ver || $new_ver != $cur_ver ]]; then
+#check_version $cur_ver $new_ver
+#if [[ $? -ne 0 || -z $new_ver || -z $cur_ver || $new_ver != $cur_ver ]]; then
+if [[ ! -z $new_ver && ! -z $cur_ver  ]]; then
+	echo -e "${CYAN}Local version:  $cur_ver"
+	echo -e "Remote version: $new_ver${NOCOLOR}"
+	
 	check_version $cur_ver $new_ver
+	
 	case $? in
 	    0)
 		echo "You package of Hiveos PXE server is up to date."
@@ -77,7 +83,7 @@ if [[ $? -ne 0 || -z $new_ver || -z $cur_ver || $new_ver != $cur_ver ]]; then
 		echo -e "You package of Hiveos PXE server ${YELLOW}($cur_ver)${NOCOLOR} is outdate. Found new version ${YELLOW}($new_ver)${NOCOLOR}. "
 		echo "Need upgrade Hiveos PXE server. Otherwise correct work is not guaranteed"
 		upgrade="y"
-		echo -n "Do you want to upgrade Hiveos PXE server package [Y/n]?"
+		echo -n "Do you want to upgrade Hiveos PXE server package? [Y/n] "
 		read upg
 		[[ ! -z $upg ]] && upgrade=$(echo ${upg,,} | cut -c 1)
 		if [[ $upgrade == "y" ]]; then
