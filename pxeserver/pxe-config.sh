@@ -192,8 +192,8 @@ echo "" >> $SERVER_CONF
 echo "FS_SIZE="$FS_SIZE >> $SERVER_CONF
 echo "" >> $SERVER_CONF
 echo "DEFAULT_DIST="$DEFAULT_DIST >> $SERVER_CONF
-echo "OCL_VER="$OCL_VER >> $SERVER_CONF
-echo "NV_VER="$NV_VER >> $SERVER_CONF
+echo "DEFAULT_OCL_VER="$OCL_VER >> $SERVER_CONF
+echo "DEFAULT_NV_VER="$NV_VER >> $SERVER_CONF
 echo "" >> $SERVER_CONF
 
 #Change Boot config

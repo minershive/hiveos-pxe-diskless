@@ -37,6 +37,7 @@ kern_ver=`dpkg -I kernel/linux-image-*.deb | grep Package: |sed -r 's/.*linux-im
 hiverepo=http://download.hiveos.farm/repo/binary
 include="sudo,curl,wget,systemd,initramfs-tools,net-tools,pv,tar,xz-utils"
 
+[[ -e server.conf ]] && source server.conf
 
 function echo2() {
 	name=`basename $0`
@@ -65,6 +66,10 @@ function show_help() {
 Nvidia drivers:
   deploy_pxe nvidia --list              list available driver versions
   deploy_pxe nvidia --build <VER>       build driver specific version ( e.g. 515 or 515.105 or 515.105.01)
+
+AMD OpenCL:
+  deploy_pxe opencl --list              list available driver versions
+  deploy_pxe opencl --build <VER>       build specific version (for now 5.4 only)
 "
 }
 
@@ -446,6 +451,30 @@ create_initrd() {
     echo_ok
 }
 
+list_opencl() {
+echo "Not implement yet."
+}
+build_opencl() {
+	[[ "$#" -eq 0 ]] && local ver=$DEFAULT_OCL_VER || local ver=$1
+	[[ ! -d $mydir/build/opencl/_$ver ]] && mkdir -p $mydir/build/opencl/_$ver
+	echo2 "Download AMDGPU/ROCm ($ver) libs..."
+	curl -s $HIVE_REPO_URL/amd-ocl/hive-rocm-5.4_5.4.6_amd64.deb |dpkg -x - $mydir/build/opencl/_$ver
+	curl -s $HIVE_REPO_URL/amd-ocl/hive-amdgpu-5.4_5.4.6_amd64.deb |dpkg -x - $mydir/build/opencl/_$ver
+	[[ $? -ne 0 ]] && echo_fail || echo_ok
+	echo2 "Create archive amd-opencl-$ver.tar.xz..."
+	tar -C $mydir/build/opencl/_$ver -cpf - . | pixz -9 -e > $mydir/build/opencl/amd-opencl-$ver.tar.xz
+	[[ $? -ne 0 ]] && echo_fail || echo_ok
+	echo2 "Remove tmp folder..."
+	rm -rf $mydir/build/opencl/_$ver
+	[[ $? -ne 0 ]] && echo_fail || echo_ok
+	echo2 "Create symlink..."
+	ln -sf ../build/opencl/amd-opencl-$ver.tar.xz $mydir/hiveramfs/
+	[[ $? -ne 0 ]] && echo_fail || echo_ok
+}
+
+remove_opencl() {
+echo "Not implement yet."
+}
 case $dist in
     ubuntu18)
 	suite=bionic
@@ -487,12 +516,33 @@ case $dist in
 	LOG_FILE="nvidia.log"
 	shift
 	;;
+    opencl)
+	shift
+	case $1 in
+	    --list)
+		list_opencl
+		exit $?
+		;;
+	    --build)
+		shift
+		build_opencl $1
+		exit $?
+		;;
+	    --remove)
+		shift
+		remove_opencl $1
+		exit $?
+		;;
+	    *)
+		show_help
+		;;
+	esac
+	;;
     *)
 	show_help
 	exit 1
 	;;
 esac
-
 
 create_fstab() {
 tee  ${DIR}/etc/fstab > /dev/null <<EOT
