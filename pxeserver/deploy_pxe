@@ -56,8 +56,8 @@ function echo_fail() {
 function show_help() {
         echo "Usage:
   deploy_pxe ubuntu20 --build           create latest Ubuntu 20.04 image
-  deploy_pxe ubuntu20 --upgrade         upgrade and repack rootfs imaage
-  deploy_pxe ubuntu20 --selfupgrade     (NOT USED YET) just upgrade Hive package (need run upgrade after this)
+  deploy_pxe ubuntu20 --selfupgrade     just upgrade Hive package and repack rootfs imaage
+  deploy_pxe ubuntu20 --upgrade         upgrade all and repack rootfs imaage
   deploy_pxe ubuntu20 --chroot          chroot into rootfs (for manual actions)
   deploy_pxe ubuntu20 --initrd          rebuild initramfs image
   deploy_pxe ubuntu20 --remove          delete rootfs folder
@@ -604,10 +604,15 @@ upgrade_fs() {
     echo2 "Upgrade FS..."
 
     chroot $DIR apt -y update &>>$LOG_FILE
-    [[ $? -ne 0 ]] && echo_fail 
+    [[ $? -ne 0 ]] && echo_fail
+    pkg=`chroot $DIR apt list --upgradable 2>&1 | grep '^hive' -c`
     chroot $DIR apt -y upgrade &>>$LOG_FILE
+    [[ $? -ne 0 ]] && echo_fail 
+    [[ $pkg -gt 0 ]] && chroot $DIR /hive/bin/repover-touch
     [[ $? -ne 0 ]] && echo_fail || echo_ok
+}
 
+install_add(){
     echo2 "Install additional packages..."
     chroot $DIR apt -y install mc busybox-static libnuma1 psmisc x11-xkb-utils gettext-base \
 				pciutils dmidecode locales-all &>>$LOG_FILE
@@ -623,6 +628,19 @@ upgrade_fs() {
     curl -s  https://kernel.googlesource.com/pub/scm/linux/kernel/git/firmware/linux-firmware.git/+archive/refs/heads/main/rtl_nic.tar.gz | tar xfz - -C $DIR/lib/firmware/updates/rtl_nic/
     echo_ok
 
+}
+
+upgrade_hive() {
+	echo2 "Upgrade Hiveon..."
+
+	chroot $DIR apt -y update &>>$LOG_FILE
+	[[ $? -ne 0 ]] && echo_fail
+	pkg=`chroot $DIR apt list --upgradable 2>&1 | grep '^hive' | tr '/' ' ' | awk '{print $1}' | sort -V`
+	if [[ ! -z $pkg ]]; then
+		chroot $DIR apt -y install $pkg  &>>$LOG_FILE
+		[[ $? -eq 0 ]] && chroot $DIR /hive/bin/repover-touch
+	fi
+	[[ $? -ne 0 ]] && echo_fail || echo_ok
 }
 
 install_pkg() {
@@ -726,9 +744,10 @@ case $1 in
 	;;
     --selfupgrade)
 	mount_need
-	upgrade_fs
+	upgrade_hive
 	clean_apt
 	umount_need
+	deploy_fs
 	exit $?
 	;;
     --chroot)
@@ -742,6 +761,7 @@ case $1 in
 	mount_need
 	add_apt
 	upgrade_fs
+	install_add
 	configure_fs
 	install_pkg
 	install_kernel
