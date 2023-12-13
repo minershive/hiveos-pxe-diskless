@@ -1,3 +1,13 @@
+#### 2023-12-13 Version 6.5.4
+* Set Ubuntu 20.04 as default image
+* Clear repo. Transfer large files to Hive download
+* Update kernel to 6.1.0-hiveos #65
+* Adopt nabidia build to 20.04 distro and 6.1 kernel
+* Update AMDGPU firmwares
+* Update Memtest86+ to 6.20 version
+* Add AMD OpenCL libs build option
+* Prepare for more customizations
+
 #### 2022-11-15 Version 6.5.3
 * Fixed Issue#19. Add `gettext-base` pkg to rootfs.
 * Fixed Issue#20. Add default locale en_us.UTF-8
