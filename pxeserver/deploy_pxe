@@ -505,7 +505,7 @@ case $dist in
     nvidia)
 	DOWNLOAD_URL=http://download.hiveos.farm
 	DRVURL=$DOWNLOAD_URL/drivers/
-	DRVPATH=build/$dist/
+	DRVPATH=build/nvidia/
 	TIMEOUT=10
 	RETRY=3
 	MINFREEMB=700
@@ -515,6 +515,22 @@ case $dist in
 	DRVNVIDIAURL="https://download.nvidia.com/XFree86/Linux-x86_64/"
 	LOG_FILE="nvidia.log"
 	shift
+	case $1 in
+	--list)
+		list_packages
+		exit 0
+		;;
+	--build)
+		extract_kernel
+		shift
+		build_driver "$1"
+		exit $?
+		;;
+	*)
+		show_help
+		exit 1
+		;;
+	esac
 	;;
     opencl)
 	shift
@@ -756,24 +772,24 @@ echo ""
 
 
 
-if [[ $dist == "nvidia" ]]; then
-	case $1 in
-	--list)
-		list_packages
-		exit 0
-		;;
-	--build)
-		extract_kernel
-		shift
-		build_driver "$1"
-		exit $?
-		;;
-	*)
-		show_help
-		exit 1
-		;;
-	esac
-fi
+#if [[ $dist == "nvidia" ]]; then
+#	case $1 in
+#	--list)
+#		list_packages
+#		exit 0
+#		;;
+#	--build)
+#		extract_kernel
+#		shift
+#		build_driver "$1"
+#		exit $?
+#		;;
+#	*)
+#		show_help
+#		exit 1
+#		;;
+#	esac
+#fi
 
 case $1 in
     --initrd)
