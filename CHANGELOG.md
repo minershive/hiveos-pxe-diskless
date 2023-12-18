@@ -2,7 +2,7 @@
 * Set Ubuntu 20.04 as default image
 * Clear repo. Transfer large files to Hive download
 * Update kernel to 6.1.0-hiveos #65
-* Adopt nabidia build to 20.04 distro and 6.1 kernel
+* Adopt Nvidia build to 20.04 distro and 6.1 kernel
 * Update AMDGPU firmwares
 * Update Memtest86+ to 6.20 version
 * Add AMD OpenCL libs build option
