@@ -1,7 +1,7 @@
 # HTTP Hiveon filesystem mounting			-*- shell-script -*-
 
 # FIXME This needs error checking
-
+. /scripts/i915.ids
 http_top()
 {
 	if [ "${http_top_used}" != "yes" ]; then
@@ -66,16 +66,16 @@ http_mount_root()
 		http_retry_count=$(( ${http_retry_count} + 1 ))
 		[ "$quiet" != "y" ] && log_end_msg
 	done
-	echo "Create tmpfs for root dir"
+	echo "> Create tmpfs for root dir, size=${ram_fs_size}"
 	mount -t tmpfs -o size=${ram_fs_size} tmpfs ${rootmnt}
 	cd ${rootmnt}
-	echo "Download and extract FS to RAM"
+	echo "> Download and extract FS to RAM"
 	fs_size=$(curl -sI ${httproot}${hive_fs_arch} 2>&1 | grep "Length" | awk '{print $2}')
 	curl -s ${httproot}${hive_fs_arch} | pv -s $fs_size | tar --lzma -xf -
 
-	list_amd=$(/bin/lspci | grep -E "Class 0300:" | grep "Device 1002:" | wc -l)
-	if [[ $list_amd -gt 0 ]]; then
-		echo "> Found $list_amd AMD GPU's"
+	count_amd=$(/bin/lspci | grep -E "Class 0300:" | grep "Device 1002:" | wc -l)
+	if [[ $count_amd -gt 0 ]]; then
+		echo "> Found $count_amd AMD GPU's"
 		### Get Opencl files
 		echo "Download and extract OPENCL libs"
 		fs_size=$(curl -sI ${httproot}${opencl_version} 2>&1 | grep "Length" | awk '{print $2}')
@@ -87,22 +87,29 @@ http_mount_root()
 	fi
 	#read -t 5 -p "Press any key to resume ..."
 	
-	#list_nv=$(/bin/lspci | grep -E "Class 030" | grep "Device 10de:" | wc -l)
-	list_nv=$(/bin/lspci -nd 10de::0300 |wc -l)
-	[[ $list_nv -eq 0 ]] && list_nv=$(/bin/lspci -nd 10de::0302 |wc -l)
-	if [[ $list_nv -gt 0 ]]; then
-		echo "> Found $list_nv NVIDIA GPU's"
+	count_nv=$(/bin/lspci -nd 10de::0300 | wc -l)
+	[[ $count_nv -eq 0 ]] && count_nv=$(/bin/lspci -nd 10de::0302 | wc -l)
+	if [[ $count_nv -gt 0 ]]; then
+		echo "> Found $count_nv NVIDIA GPU's"
 		### Get NVIDIA files
-		echo "Download and extract NVIDIA libs and modules"
+		echo "> Download and extract NVIDIA libs and modules"
 		fs_size=$(curl -sI ${httproot}/nvidia/${nvidia_version} 2>&1 | grep "Length" | awk '{print $2}')
 		curl -s ${httproot}/nvidia/${nvidia_version} | pv -s $fs_size | tar --lzma -xf -
 
-		echo "Download and extract Xorg libs and modules"
+		echo "> Download and extract Xorg libs and modules"
 		fs_size=$(curl -sI ${httproot}/X.tar.xz 2>&1 | grep "Length" | awk '{print $2}')
 		curl -s ${httproot}/X.tar.xz | pv -s $fs_size | tar --lzma -xf -
 		/bin/touch hive-config/.DISKLESS_NVIDIA
 	fi
-	#read -t 5 -p "Press any key to resume ..."
+	
+	count_intel=$(/bin/lspci -n | grep -Ei "$INTEL_DG_IDS" | wc -l)
+	if [[ $count_intel -gt 0 ]]; then
+		echo "> Found $count_intel INTEL dGPU's"
+		echo "> Download and extract INTEL firmwares"
+		fs_size=$(curl -sI ${httproot}/nvidia/i915_fw.tar.xz 2>&1 | grep "Length" | awk '{print $2}')
+		curl -s ${httproot}/i915_fw.tar.xz | pv -s $fs_size | tar --lzma -xf -
+	fi
+	#read -t 15 -p "Press any key to resume ..."
 
 	[[ $? == 0 ]] && log_end_msg
 	
