@@ -87,7 +87,9 @@ http_mount_root()
 	fi
 	#read -t 5 -p "Press any key to resume ..."
 	
-	list_nv=$(/bin/lspci | grep -E "Class 030" | grep "Device 10de:" | wc -l)
+	#list_nv=$(/bin/lspci | grep -E "Class 030" | grep "Device 10de:" | wc -l)
+	list_nv=$(/bin/lspci -nd 10de::0300 |wc -l)
+	[[ $list_nv -eq 0 ]] && list_nv=$(/bin/lspci -nd 10de::0302 |wc -l)
 	if [[ $list_nv -gt 0 ]]; then
 		echo "> Found $list_nv NVIDIA GPU's"
 		### Get NVIDIA files
