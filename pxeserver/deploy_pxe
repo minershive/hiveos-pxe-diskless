@@ -616,8 +616,9 @@ configure_fs() {
     chroot $DIR systemctl enable systemd-resolved &>>$LOG_FILE
     echo "nameserver 127.0.0.53" > $DIR/etc/resolv.conf
     #Need for loadable custom modules
-    echo "/sbin/depmod" >>  $DIR/lib/lsb/init-functions 
-    echo "/sbin/ldconfig" >>  $DIR/lib/lsb/init-functions 
+    echo "/sbin/depmod" >>  $DIR/lib/lsb/init-functions
+    echo "/sbin/ldconfig" >>  $DIR/lib/lsb/init-functions
+    echo "blacklist amdgpu" > $DIR/etc/modprobe.d/blacklist-amdgpu.conf
     
     echo "user ALL=(ALL) NOPASSWD:ALL" >> $DIR/etc/sudoers
     sed -i 's|Defaults	secure_path|#Defaults	secure_path|' $DIR/etc/sudoers
@@ -673,9 +674,12 @@ upgrade_fs() {
     [[ $? -ne 0 ]] && echo_fail
     pkg=`chroot $DIR apt list --upgradable 2>&1 | grep '^hive' -c`
     chroot $DIR apt -y upgrade &>>$LOG_FILE
-    [[ $? -ne 0 ]] && echo_fail 
-    [[ $pkg -gt 0 ]] && chroot $DIR /hive/bin/repover-touch
     [[ $? -ne 0 ]] && echo_fail || echo_ok
+    if [[ ! $1 ]]; then
+        echo2 "Touch RepoVer..."
+        [[ $pkg -gt 0 ]] && chroot $DIR /hive/bin/repover-touch
+        sync && echo_ok
+    fi
 }
 
 install_add(){
@@ -706,7 +710,7 @@ upgrade_hive() {
 		chroot $DIR apt -y install $pkg  &>>$LOG_FILE
 		[[ $? -eq 0 ]] && chroot $DIR /hive/bin/repover-touch
 	fi
-	[[ $? -ne 0 ]] && echo_fail || echo_ok
+	echo_ok
 }
 
 install_pkg() {
@@ -826,7 +830,7 @@ case $1 in
 	create_fs
 	mount_need
 	add_apt
-	upgrade_fs
+	upgrade_fs 1
 	install_add
 	configure_fs
 	install_pkg

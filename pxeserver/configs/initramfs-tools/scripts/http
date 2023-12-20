@@ -73,7 +73,7 @@ http_mount_root()
 	fs_size=$(curl -sI ${httproot}${hive_fs_arch} 2>&1 | grep "Length" | awk '{print $2}')
 	curl -s ${httproot}${hive_fs_arch} | pv -s $fs_size | tar --lzma -xf -
 
-	count_amd=$(/bin/lspci | grep -E "Class 0300:" | grep "Device 1002:" | wc -l)
+	count_amd=$(/bin/lspci -nd 1002::0300 | wc -l)
 	if [[ $count_amd -gt 0 ]]; then
 		echo "> Found $count_amd AMD GPU's"
 		### Get Opencl files
