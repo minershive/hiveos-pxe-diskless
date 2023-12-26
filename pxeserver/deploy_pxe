@@ -57,8 +57,8 @@ function echo_fail() {
 function show_help() {
         echo "Usage:
   deploy_pxe ubuntu20 --build           create latest Ubuntu 20.04 image
-  deploy_pxe ubuntu20 --selfupgrade     just upgrade Hive package and repack rootfs imaage
-  deploy_pxe ubuntu20 --upgrade         upgrade all and repack rootfs imaage
+  deploy_pxe ubuntu20 --selfupgrade     just upgrade Hive package and repack rootfs image
+  deploy_pxe ubuntu20 --upgrade         upgrade all and repack rootfs image
   deploy_pxe ubuntu20 --chroot          chroot into rootfs (for manual actions)
   deploy_pxe ubuntu20 --initrd          rebuild initramfs image
   deploy_pxe ubuntu20 --remove          delete rootfs folder
@@ -363,11 +363,11 @@ function build_driver() { # @url or @file, @force_install
     echo2 "Build NVIDIA-$ver (`nproc` CPU cores)..."
     mkdir -p $mydir/$build_dir/usr/lib/modules/$kern_ver/kernel/drivers/video
     cd ${ver}/kernel/ && make -j `nproc` SYSSRC=$mydir/build/_kernel/$kern_ver/usr/src/linux-headers-$kern_ver/ M=$PWD IGNORE_CC_MISMATCH='1' > $mydir/${DRVPATH}make-$ver.log 2>&1
-    [[ $? -ne 0 ]] && echo -e "${RED}> Filed to build driver.${NOCOLOR}" && echo_fail
+    [[ $? -ne 0 ]] && echo -e "${RED}> Failed to build driver.${NOCOLOR}" && echo_fail
     echo_ok
     echo2 "Copy driver files..."
     find . -type f -name "*.ko" -exec cp -r "{}" $mydir/$build_dir/usr/lib/modules/$kern_ver/kernel/drivers/video \;
-    [[ $? -ne 0 ]] && echo -e "${RED}> Filed to copy driver files.${NOCOLOR}" && echo_fail
+    [[ $? -ne 0 ]] && echo -e "${RED}> Failed to copy driver files.${NOCOLOR}" && echo_fail
     echo_ok
     #Copy libs 
     echo2 "Copy lib files..."
@@ -384,7 +384,7 @@ function build_driver() { # @url or @file, @force_install
 	cp -r $mydir/${DRVPATH}${ver}/$file.$ver .
 	ln -s $file.$ver $file
 	ln -s $file.$ver $file.1
-	[[ $? -ne 0 ]] && echo -e "${RED}> Filed to copy lib files.${NOCOLOR}" && echo_fail
+	[[ $? -ne 0 ]] && echo -e "${RED}> Failed to copy lib files.${NOCOLOR}" && echo_fail
     done
 
     for file in nvidia-persistenced nvidia-settings nvidia-smi ; do
@@ -452,7 +452,7 @@ create_initrd() {
 }
 
 list_opencl() {
-echo "Not implement yet."
+echo "Not implemented yet."
 }
 build_opencl() {
 	[[ "$#" -eq 0 ]] && local ver=$DEFAULT_OCL_VER || local ver=$1
@@ -473,7 +473,7 @@ build_opencl() {
 }
 
 remove_opencl() {
-echo "Not implement yet."
+echo "Not implemented yet."
 }
 case $dist in
     ubuntu18)
@@ -562,9 +562,9 @@ create_fs() {
 	    echo_ok
 	else
 		echo "" 
-		echo -e "${RED}RootFS on $dist already exist.
+		echo -e "${RED}RootFS on $dist already exists.
 		${YELLOW}Try to use 
-		    ${CYAN}$(basename $0) ${CYAN}$dist --upgrade ${YELLOW}to upgrade exist rootfs
+		    ${CYAN}$(basename $0) ${CYAN}$dist --upgrade ${YELLOW}to upgrade the existing rootfs
 		or
 		    ${CYAN}$(basename $0) $dist --remove ${YELLOW}to remove them.
 		And then re-launch 
