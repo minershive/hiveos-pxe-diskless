@@ -1,3 +1,11 @@
+#### 2024-01-10 Version 6.5.5
+* Fix rootfs upgrade function. Issue#25
+* Update AMD firmwares.
+    Add out of tree amdgpu.ko from mainline Hiveos image
+    Initial support AMD 7xxx dGPU's
+    Initial basic support INTEL dGPU's
+* Refactor Nvidia GPU "checkout"
+
 #### 2023-12-13 Version 6.5.4
 * Set Ubuntu 20.04 as default image
 * Clear repo. Transfer large files to Hive download

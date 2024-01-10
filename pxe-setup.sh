@@ -86,7 +86,7 @@ fi
 
 config="y"
 echo
-echo -n "Do you want to config Hiveos PXE server package [Y/n]? "
+echo -n "Do you want to config Hiveos PXE server package? [Y/n] "
 read val
 [[ ! -z $val ]] && config=$(echo ${val,,} | cut -c 1)
 if [[ $config == "y" ]]; then
