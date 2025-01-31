@@ -15,6 +15,8 @@ For installation directly from the GitHub, execute the following command in the 
 
 Type ```./deploy_pxe ubuntu20 --build```.
 This command create new hiveramfs image in pxeserver/hiveramfs/ folder. Rootfs stored in pxeserver/build/ubuntu20/_fs.
+Ubuntu 20.04 set as default, but you can use ubuntu18|ubuntu20|ubuntu22 option for build custom image.
+Set default boot image in  pxeserver/tftp/efi/default.cfg
 Try ```./deploy_pxe --help``` for see more options
 
 If you need support Nvidia cards, use ```./deploy_pxe nvidia list``` for list all avaliable drivers and ```./deploy_pxe nvidia --build <VER>``` to create nvidia-<VER>.tar.xz image.

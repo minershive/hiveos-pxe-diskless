@@ -1,3 +1,6 @@
+#### 2025-01-31 Version 6.5.6
+* Add custom images. Issue#30
+
 #### 2024-01-10 Version 6.5.5
 * Fix rootfs upgrade function. Issue#25
 * Update AMD firmwares.

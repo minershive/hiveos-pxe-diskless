@@ -55,21 +55,25 @@ function echo_fail() {
 }
 
 function show_help() {
-        echo "Usage:
-  deploy_pxe ubuntu20 --build           create latest Ubuntu 20.04 image
-  deploy_pxe ubuntu20 --selfupgrade     just upgrade Hive package and repack rootfs image
-  deploy_pxe ubuntu20 --upgrade         upgrade all and repack rootfs image
-  deploy_pxe ubuntu20 --chroot          chroot into rootfs (for manual actions)
-  deploy_pxe ubuntu20 --initrd          rebuild initramfs image
-  deploy_pxe ubuntu20 --remove          delete rootfs folder
+        echo "Avaliable dist for build:
+  ubuntu18				Ubuntu 18.04
+  ubuntu20				Ubuntu 20.04
+  ubuntu22				Ubuntu 22.04
+Usage:
+  deploy_pxe <dist> --build		create latest Ubuntu 20.04 image
+  deploy_pxe <dist> --selfupgrade	just upgrade Hive package and repack rootfs image
+  deploy_pxe <dist> --upgrade		upgrade all and repack rootfs image
+  deploy_pxe <dist> --chroot		chroot into rootfs (for manual actions)
+  deploy_pxe <dist> --initrd		rebuild initramfs image
+  deploy_pxe <dist> --remove		delete rootfs folder
 
 Nvidia drivers:
-  deploy_pxe nvidia --list              list available driver versions
-  deploy_pxe nvidia --build <VER>       build driver specific version ( e.g. 515 or 515.105 or 515.105.01)
+  deploy_pxe nvidia --list		list available driver versions
+  deploy_pxe nvidia --build <VER>	build driver specific version ( e.g. 515 or 515.105 or 515.105.01)
 
 AMD OpenCL:
-  deploy_pxe opencl --list              list available driver versions
-  deploy_pxe opencl --build <VER>       build specific version (for now 5.4 only)
+  deploy_pxe opencl --list		list available driver versions
+  deploy_pxe opencl --build <VER>	build specific version (for now 5.4 only)
 "
 }
 
