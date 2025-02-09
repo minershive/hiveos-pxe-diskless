@@ -19,6 +19,11 @@ Ubuntu 20.04 set as default, but you can use ubuntu18|ubuntu20|ubuntu22 option f
 Set default boot image in  pxeserver/tftp/efi/default.cfg
 Try ```./deploy_pxe --help``` for see more options
 
+## Create custom boot config
+You can manually create custom boot config for PXE UEFI to boot different images on different PXE RIGS
+Just copy pxeserver/tftp/efi/default.cfg to pxeserver/tftp/efi/custom/aa:bb:cc:dd:ee:ff.cfg (where aa:bb:cc:dd:ee:ff is a mac-address of your rig).
+You can change in them ram_size for image, image_name, AMD OpenCL or Nvidia driver version.
+
 If you need support Nvidia cards, use ```./deploy_pxe nvidia list``` for list all avaliable drivers and ```./deploy_pxe nvidia --build <VER>``` to create nvidia-<VER>.tar.xz image.
 This image will be stored in pxeserver/hiveramfs/nvidia folder.
 
